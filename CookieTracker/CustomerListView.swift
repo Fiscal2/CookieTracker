@@ -29,7 +29,6 @@ struct CustomerListView: View {
                             HStack {
                                 Text(customer.name)
                                 Spacer()
-                                Image(systemName: "chevron.right")
                                     .foregroundColor(.gray)
                             }
                         }

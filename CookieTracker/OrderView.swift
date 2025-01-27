@@ -23,11 +23,20 @@ struct OrderView: View {
         !address.trimmingCharacters(in: .whitespaces).isEmpty // Delivery is true if address is provided
     }
 
-    var totalCost: Int {
+    var totalCost: Double {
         let totalCookies = chocolateChipQuantity + sprinkleQuantity + smoreQuantity
-        let cookieCost = (totalCookies / 12) * 30 + (totalCookies % 12 > 0 ? 15 : 0) // $30 per dozen, $15 for half-dozen
-        let deliveryFee = isDelivery ? 6 : 0
+        let cookieCost = Double(totalCookies) * 2.5 // Each cookie costs $2.50
+        let deliveryFee = isDelivery ? 6.0 : 0.0
         return cookieCost + deliveryFee
+    }
+
+    var isValidOrder: Bool {
+        // Ensure all fields except address are valid, and the total number of cookies is >= 6
+        let totalCookies = chocolateChipQuantity + sprinkleQuantity + smoreQuantity
+        return !name.trimmingCharacters(in: .whitespaces).isEmpty &&
+               !phone.trimmingCharacters(in: .whitespaces).isEmpty &&
+               !email.trimmingCharacters(in: .whitespaces).isEmpty &&
+               totalCookies >= 6
     }
 
     var body: some View {
@@ -101,7 +110,7 @@ struct OrderView: View {
                 Text("Total Cost:")
                     .font(.headline)
                 Spacer()
-                Text("$\(totalCost)")
+                Text("$\(String(format: "%.2f", totalCost))")
                     .font(.headline)
                     .foregroundColor(.blue)
             }
@@ -117,7 +126,7 @@ struct OrderView: View {
 
             // Validation Error Message
             if showValidationError {
-                Text("Error: Total quantity must be 6 or divisible by 12.")
+                Text("Error: Please fill all required fields and ensure at least 6 cookies are ordered.")
                     .foregroundColor(.red)
                     .font(.subheadline)
             }
@@ -136,7 +145,7 @@ struct OrderView: View {
 
             // Add Customer & Order Button
             Button(action: {
-                if isValidOrder() {
+                if isValidOrder {
                     let orders = [
                         Order(flavor: "Chocolate Chip", quantity: chocolateChipQuantity),
                         Order(flavor: "Sprinkle", quantity: sprinkleQuantity),
@@ -174,10 +183,11 @@ struct OrderView: View {
                 Text("Add Customer & Order")
                     .frame(maxWidth: .infinity, minHeight: 20)
                     .padding()
-                    .background(Color.blue)
+                    .background(isValidOrder ? Color.blue : Color.gray) // Disable if invalid
                     .foregroundColor(.white)
                     .cornerRadius(8)
             }
+            .disabled(!isValidOrder) // Disable the button if order is invalid
             .padding(.bottom, 20)
 
             Spacer()
@@ -196,19 +206,7 @@ struct OrderView: View {
         smoreQuantity = 0
         isNewCustomer = true // Reset to new customer
     }
-
-    // Validate the order
-    private func isValidOrder() -> Bool {
-        let quantities = [chocolateChipQuantity, sprinkleQuantity, smoreQuantity]
-        let total = quantities.reduce(0, +) // Sum up all quantities
-
-        // Allow total quantities of 6 or divisible by 12
-        return total == 6 || total % 12 == 0
-    }
 }
-
-
-
 
 
 
