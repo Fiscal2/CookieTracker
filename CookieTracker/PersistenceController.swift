@@ -2,7 +2,7 @@
 //  PersistenceController.swift
 //  CookieTracker
 //
-//  Created by Zachary Goldberg on 1/30/25.
+//
 //
 import CoreData
 

@@ -2,7 +2,7 @@
 //  ContentView.swift
 //  CookieTracker
 //
-//  Created by Zachary Goldberg on 1/25/25.
+// 
 //
 import SwiftUI
 
