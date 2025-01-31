@@ -6,17 +6,27 @@
 //
 
 import SwiftUI
+import CoreData
 
 struct CustomerDetailView: View {
-    let customer: Customer
+    let customer: CustomerEntity
     @Environment(\.openURL) var openURL // Environment to handle URL opening
 
     // Calculate the total cost of the customer's order
     var totalCost: Double {
-        let totalCookies = customer.orders.reduce(0) { $0 + $1.quantity }
-        let cookieCost = (totalCookies / 12) * 30 + (totalCookies % 12 > 0 ? 15 : 0)
-        let deliveryFee = customer.delivery ? 6 : 0
-        return Double(cookieCost + deliveryFee)
+        // Safely convert orders to an array
+        let ordersArray = (customer.orders as? Set<OrderEntity>)?.compactMap { $0 } ?? []
+
+        // Calculate total cookies
+        let totalCookies = ordersArray.reduce(0) { $0 + Int($1.quantity) }
+        
+        // Cookie cost calculation ($2.50 per cookie)
+        let cookieCost = Double(totalCookies) * 2.5
+        
+        // Delivery fee (if applicable)
+        let deliveryFee = customer.delivery ? 6.0 : 0.0
+        
+        return cookieCost + deliveryFee
     }
 
     var body: some View {
@@ -27,24 +37,25 @@ struct CustomerDetailView: View {
 
             // Customer Information
             Group {
-                DetailRow(label: "Name", value: customer.name)
-                DetailRow(label: "Phone", value: customer.phone)
-                DetailRow(label: "Email", value: customer.email)
+                DetailRow(label: "Name", value: customer.name ?? "N/A")
+                DetailRow(label: "Phone", value: customer.phone ?? "N/A")
+                DetailRow(label: "Email", value: customer.email ?? "N/A")
 
-                // Make the address clickable
-                HStack {
-                    Text("Address")
-                        .font(.headline)
-                    Spacer()
-                    Button(action: {
-                        openAddressInMaps(customer.address)
-                    }) {
-                        Text(customer.address)
-                            .foregroundColor(.blue)
-                            .bold()
+                if let address = customer.address, !address.isEmpty {
+                    HStack {
+                        Text("Address")
+                            .font(.headline)
+                        Spacer()
+                        Button(action: {
+                            openAddressInMaps(address)
+                        }) {
+                            Text(address)
+                                .foregroundColor(.blue)
+                                .bold()
+                        }
                     }
+                    .padding(.vertical, 4)
                 }
-                .padding(.vertical, 4)
             }
 
             Divider()
@@ -53,18 +64,17 @@ struct CustomerDetailView: View {
             Text("Orders")
                 .font(.headline)
 
-            if customer.orders.isEmpty {
-                Text("No orders placed.")
-                    .foregroundColor(.gray)
-                    .italic()
-            } else {
-                ForEach(customer.orders, id: \.flavor) { order in
+            // Ensure orders exist before iterating
+            if let ordersSet = customer.orders as? Set<OrderEntity>, !ordersSet.isEmpty {
+                let ordersArray = ordersSet.sorted { $0.flavor ?? "" < $1.flavor ?? "" } // Sort alphabetically
+                ForEach(ordersArray, id: \.flavor) { order in
                     HStack {
-                        Text("\(order.flavor):")
+                        Text("\(order.flavor ?? "Unknown Flavor"):")
                         Spacer()
                         Text("\(order.quantity) cookies")
                     }
                 }
+
                 Divider()
 
                 if customer.delivery {
@@ -83,6 +93,10 @@ struct CustomerDetailView: View {
                         .font(.headline)
                         .foregroundColor(.blue)
                 }
+            } else {
+                Text("No orders placed.")
+                    .foregroundColor(.gray)
+                    .italic()
             }
 
             Spacer()
@@ -115,6 +129,8 @@ struct DetailRow: View {
         .padding(.vertical, 4)
     }
 }
+
+
 
 
 

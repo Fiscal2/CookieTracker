@@ -5,9 +5,15 @@
 //  Created by Zachary Goldberg on 1/26/25.
 //
 import SwiftUI
+import CoreData
 
 struct OrderView: View {
-    @Binding var customers: [Customer]
+    @Environment(\.managedObjectContext) private var viewContext
+    @FetchRequest(
+        entity: CustomerEntity.entity(),
+        sortDescriptors: [NSSortDescriptor(keyPath: \CustomerEntity.name, ascending: true)]
+    ) private var customers: FetchedResults<CustomerEntity>
+
     @State private var name = ""
     @State private var phone = ""
     @State private var email = ""
@@ -15,35 +21,30 @@ struct OrderView: View {
     @State private var chocolateChipQuantity = 0
     @State private var sprinkleQuantity = 0
     @State private var smoreQuantity = 0
-    @State private var isNewCustomer = true // Tracks whether the customer is new
+    @State private var isNewCustomer = true
     @State private var showSuccessMessage = false
     @State private var showValidationError = false
 
     var isDelivery: Bool {
-        !address.trimmingCharacters(in: .whitespaces).isEmpty // Delivery is true if address is provided
+        !address.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
     var totalCost: Double {
         let totalCookies = chocolateChipQuantity + sprinkleQuantity + smoreQuantity
-        let cookieCost = Double(totalCookies) * 2.5 // Each cookie costs $2.50
+        let cookieCost = Double(totalCookies) * 2.5
         let deliveryFee = isDelivery ? 6.0 : 0.0
         return cookieCost + deliveryFee
     }
 
     var isValidOrder: Bool {
-        // Ensure all fields except address are valid, and the total number of cookies is >= 6
         let totalCookies = chocolateChipQuantity + sprinkleQuantity + smoreQuantity
-        return !name.trimmingCharacters(in: .whitespaces).isEmpty &&
-               !phone.trimmingCharacters(in: .whitespaces).isEmpty &&
-               !email.trimmingCharacters(in: .whitespaces).isEmpty &&
-               totalCookies >= 6
+        return !name.isEmpty && !phone.isEmpty && !email.isEmpty && totalCookies >= 6
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Order").font(.largeTitle).bold()
 
-            // Customer Information Inputs
             VStack(alignment: .leading, spacing: 16) {
                 TextField("Name", text: $name)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -58,43 +59,10 @@ struct OrderView: View {
                     .textFieldStyle(RoundedBorderTextFieldStyle())
             }
 
-            // New Customer Option
-            VStack(alignment: .leading, spacing: 8) {
-                Text("New Customer?")
-                    .font(.subheadline)
-                    .bold()
+            Divider().padding(.vertical, 8)
 
-                HStack(spacing: 8) {
-                    Button(action: {
-                        isNewCustomer = true
-                    }) {
-                        Text("Yes")
-                            .font(.subheadline)
-                            .frame(maxWidth: .infinity, minHeight: 30)
-                            .background(isNewCustomer ? Color.blue : Color.gray.opacity(0.2))
-                            .foregroundColor(.white)
-                            .cornerRadius(6)
-                    }
-
-                    Button(action: {
-                        isNewCustomer = false
-                    }) {
-                        Text("No")
-                            .font(.subheadline)
-                            .frame(maxWidth: .infinity, minHeight: 30)
-                            .background(!isNewCustomer ? Color.blue : Color.gray.opacity(0.2))
-                            .foregroundColor(.white)
-                            .cornerRadius(6)
-                    }
-                }
-            }
-
-            Divider()
-                .padding(.vertical, 8)
-
-            // Cookie Flavors and Quantities
             VStack(alignment: .leading, spacing: 10) {
-                Text("Choose Flavors (Minimum of 6):")
+                Text("Choose Flavors (Minimum of 6 Total):")
                     .font(.headline)
 
                 FlavorInputRow(flavor: "Chocolate Chip", quantity: $chocolateChipQuantity)
@@ -102,10 +70,8 @@ struct OrderView: View {
                 FlavorInputRow(flavor: "S'more", quantity: $smoreQuantity)
             }
 
-            Divider()
-                .padding(.vertical, 8)
+            Divider().padding(.vertical, 8)
 
-            // Total Cost
             HStack {
                 Text("Total Cost:")
                     .font(.headline)
@@ -121,17 +87,14 @@ struct OrderView: View {
                     .foregroundColor(.gray)
             }
 
-            Divider()
-                .padding(.vertical, 8)
+            Divider().padding(.vertical, 8)
 
-            // Validation Error Message
             if showValidationError {
                 Text("Error: Please fill all required fields and ensure at least 6 cookies are ordered.")
                     .foregroundColor(.red)
                     .font(.subheadline)
             }
 
-            // Success Message
             if showSuccessMessage {
                 HStack {
                     Image(systemName: "checkmark.circle.fill")
@@ -143,51 +106,15 @@ struct OrderView: View {
                 .transition(.opacity)
             }
 
-            // Add Customer & Order Button
-            Button(action: {
-                if isValidOrder {
-                    let orders = [
-                        Order(flavor: "Chocolate Chip", quantity: chocolateChipQuantity),
-                        Order(flavor: "Sprinkle", quantity: sprinkleQuantity),
-                        Order(flavor: "S'more", quantity: smoreQuantity)
-                    ]
-
-                    // Create a new customer
-                    let newCustomer = Customer.createCustomer(
-                        name: name,
-                        phone: phone,
-                        email: email,
-                        address: address,
-                        orders: orders,
-                        delivery: isDelivery
-                    )
-
-                    // Append the customer to the local list
-                    customers.append(newCustomer)
-                    print("Customer added: \(newCustomer.name)")
-
-                    // Show success message
-                    showSuccessMessage = true
-                    showValidationError = false // Clear any error messages
-
-                    // Hide success message after 2 seconds
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                        showSuccessMessage = false
-                    }
-
-                    resetFields() // Clear the input fields
-                } else {
-                    showValidationError = true // Show validation error
-                }
-            }) {
+            Button(action: saveOrder) {
                 Text("Add Customer & Order")
                     .frame(maxWidth: .infinity, minHeight: 20)
                     .padding()
-                    .background(isValidOrder ? Color.blue : Color.gray) // Disable if invalid
+                    .background(isValidOrder ? Color.blue : Color.gray)
                     .foregroundColor(.white)
                     .cornerRadius(8)
             }
-            .disabled(!isValidOrder) // Disable the button if order is invalid
+            .disabled(!isValidOrder)
             .padding(.bottom, 20)
 
             Spacer()
@@ -195,20 +122,55 @@ struct OrderView: View {
         .padding()
     }
 
-    // Helper method to reset input fields
-    private func resetFields() {
-        name = ""
-        phone = ""
-        email = ""
-        address = ""
-        chocolateChipQuantity = 0
-        sprinkleQuantity = 0
-        smoreQuantity = 0
-        isNewCustomer = true // Reset to new customer
+    private func saveOrder() {
+        if isValidOrder {
+            let newCustomer = CustomerEntity(context: viewContext)
+            newCustomer.id = UUID()
+            newCustomer.name = name
+            newCustomer.phone = phone
+            newCustomer.email = email
+            newCustomer.address = address
+            newCustomer.delivery = isDelivery
+            newCustomer.totalCost = totalCost
+
+            let flavors = [
+                ("Chocolate Chip", chocolateChipQuantity),
+                ("Sprinkle", sprinkleQuantity),
+                ("S'more", smoreQuantity)
+            ]
+
+            // Create a mutable set for the orders
+            var orderSet = Set<OrderEntity>()
+
+            for (flavor, quantity) in flavors where quantity > 0 {
+                let newOrder = OrderEntity(context: viewContext)
+                newOrder.flavor = flavor
+                newOrder.quantity = Int16(quantity)
+                newOrder.customer = newCustomer // Establish relationship
+
+                orderSet.insert(newOrder) // Add order to set
+            }
+
+            // Assign orders to the customer (corrected)
+            newCustomer.orders = NSSet(set: orderSet)
+
+            do {
+                try viewContext.save()
+                showSuccessMessage = true
+                showValidationError = false
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    showSuccessMessage = false
+                }
+            } catch {
+                print("Error saving order: \(error.localizedDescription)")
+            }
+        } else {
+            showValidationError = true
+        }
     }
+
 }
-
-
 
 struct FlavorInputRow: View {
     let flavor: String
@@ -220,23 +182,14 @@ struct FlavorInputRow: View {
                 .font(.headline)
             Spacer()
             HStack(spacing: 10) {
-                // Decrement Button
-                Button(action: {
-                    if quantity > 0 { quantity -= 1 } // Decrease by 1
-                }) {
+                Button(action: { if quantity > 0 { quantity -= 1 } }) {
                     Image(systemName: "minus.circle")
-                        .foregroundColor(quantity > 0 ? .blue : .gray) // Disable if at 0
+                        .foregroundColor(quantity > 0 ? .blue : .gray)
                 }
-
-                // Quantity Display
                 Text("\(quantity)")
                     .frame(width: 40, alignment: .center)
                     .font(.headline)
-
-                // Increment Button
-                Button(action: {
-                    quantity += 1 // Increase by 1
-                }) {
+                Button(action: { quantity += 1 }) {
                     Image(systemName: "plus.circle")
                         .foregroundColor(.blue)
                 }
@@ -244,6 +197,7 @@ struct FlavorInputRow: View {
         }
     }
 }
+
 
 
 

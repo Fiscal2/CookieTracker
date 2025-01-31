@@ -5,14 +5,18 @@
 //  Created by Zachary Goldberg on 1/26/25.
 //
 import SwiftUI
+import CoreData
 
 struct CustomerListView: View {
-    @Binding var customers: [Customer]
+    @FetchRequest(
+        entity: CustomerEntity.entity(),
+        sortDescriptors: [NSSortDescriptor(keyPath: \CustomerEntity.name, ascending: true)]
+    ) private var customers: FetchedResults<CustomerEntity>
+
     @State private var searchText = ""
 
-    // Filtered list of customers based on the search query
-    var filteredCustomers: [Customer] {
-        customers.filter { searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText) }
+    var filteredCustomers: [CustomerEntity] {
+        customers.filter { searchText.isEmpty || ($0.name?.localizedCaseInsensitiveContains(searchText) ?? false) }
     }
 
     var body: some View {
@@ -24,22 +28,22 @@ struct CustomerListView: View {
                         .multilineTextAlignment(.center)
                         .padding()
                 } else {
-                    ForEach(filteredCustomers) { customer in
+                    ForEach(filteredCustomers, id: \.self) { customer in
                         NavigationLink(destination: CustomerDetailView(customer: customer)) {
                             HStack {
-                                Text(customer.name)
+                                Text(customer.name ?? "Unknown Name")
                                 Spacer()
-                                    .foregroundColor(.gray)
                             }
                         }
                     }
                 }
             }
             .navigationTitle("Customers")
-            .searchable(text: $searchText, prompt: "Search customers") // Built-in search bar
+            .searchable(text: $searchText, prompt: "Search customers")
         }
     }
 }
+
 
 
 

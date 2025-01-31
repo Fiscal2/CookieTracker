@@ -8,20 +8,24 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var customers: [Customer] = []
+    let viewContext = CoreDataStack.shared.persistentContainer.viewContext
 
     var body: some View {
         TabView {
-            CustomerListView(customers: $customers)
+            CustomerListView()
                 .tabItem {
                     Image(systemName: "person.3")
                     Text("Customers")
                 }
-            OrderView(customers: $customers)
+                .environment(\.managedObjectContext, viewContext)
+
+            OrderView()
                 .tabItem {
                     Image(systemName: "cart")
                     Text("Orders")
                 }
+                .environment(\.managedObjectContext, viewContext)
+
             Text("Settings")
                 .tabItem {
                     Image(systemName: "gearshape")
@@ -34,3 +38,5 @@ struct ContentView: View {
 #Preview {
     ContentView()
 }
+
+
