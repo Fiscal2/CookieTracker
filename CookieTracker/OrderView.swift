@@ -36,9 +36,9 @@ struct OrderView: View {
         return cookieCost + deliveryFee
     }
 
-    var isValidOrder: Bool {
-        let totalCookies = chocolateChipQuantity + sprinkleQuantity + smoreQuantity
-        return !name.isEmpty && !phone.isEmpty && !email.isEmpty && totalCookies >= 6
+    private var isValidOrder: Bool {
+        let newTotal = chocolateChipQuantity + sprinkleQuantity + smoreQuantity
+        return newTotal >= 6
     }
 
     var body: some View {
@@ -59,7 +59,8 @@ struct OrderView: View {
                     .textFieldStyle(RoundedBorderTextFieldStyle())
             }
 
-            Divider().padding(.vertical, 8)
+            Divider()
+                .padding(.vertical, 8)
 
             VStack(alignment: .leading, spacing: 10) {
                 Text("Choose Flavors (Minimum of 6 Total):")
@@ -70,7 +71,8 @@ struct OrderView: View {
                 FlavorInputRow(flavor: "S'more", quantity: $smoreQuantity)
             }
 
-            Divider().padding(.vertical, 8)
+            Divider()
+                .padding(.vertical, 8)
 
             HStack {
                 Text("Total Cost:")
@@ -87,7 +89,8 @@ struct OrderView: View {
                     .foregroundColor(.gray)
             }
 
-            Divider().padding(.vertical, 8)
+            Divider()
+                .padding(.vertical, 8)
 
             if showValidationError {
                 Text("Error: Please fill all required fields and ensure at least 6 cookies are ordered.")
@@ -123,53 +126,80 @@ struct OrderView: View {
     }
 
     private func saveOrder() {
-        if isValidOrder {
-            let newCustomer = CustomerEntity(context: viewContext)
-            newCustomer.id = UUID()
-            newCustomer.name = name
-            newCustomer.phone = phone
-            newCustomer.email = email
-            newCustomer.address = address
-            newCustomer.delivery = isDelivery
-            newCustomer.totalCost = totalCost
-
-            let flavors = [
-                ("Chocolate Chip", chocolateChipQuantity),
-                ("Sprinkle", sprinkleQuantity),
-                ("S'more", smoreQuantity)
-            ]
-
-            // Create a mutable set for the orders
-            var orderSet = Set<OrderEntity>()
-
-            for (flavor, quantity) in flavors where quantity > 0 {
-                let newOrder = OrderEntity(context: viewContext)
-                newOrder.flavor = flavor
-                newOrder.quantity = Int16(quantity)
-                newOrder.customer = newCustomer // Establish relationship
-
-                orderSet.insert(newOrder) // Add order to set
-            }
-
-            // Assign orders to the customer (corrected)
-            newCustomer.orders = NSSet(set: orderSet)
-
-            do {
-                try viewContext.save()
-                showSuccessMessage = true
-                showValidationError = false
-                
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                    showSuccessMessage = false
-                }
-            } catch {
-                print("Error saving order: \(error.localizedDescription)")
-            }
-        } else {
+        let newTotal = chocolateChipQuantity + sprinkleQuantity + smoreQuantity
+        
+        // Ensure the order meets the 6-cookie minimum
+        guard newTotal >= 6 else {
             showValidationError = true
+            return
+        }
+
+        let fetchRequest: NSFetchRequest<CustomerEntity> = CustomerEntity.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "name == %@ AND phone == %@", name, phone)
+
+        do {
+            let existingCustomers = try viewContext.fetch(fetchRequest)
+
+            if let existingCustomer = existingCustomers.first {
+                addOrders(to: existingCustomer)
+            } else {
+                createNewCustomer()
+            }
+
+            try viewContext.save()
+            showSuccessMessage = true
+            showValidationError = false
+
+            resetFields()
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                showSuccessMessage = false
+            }
+        } catch {
+            print("Error saving order: \(error.localizedDescription)")
         }
     }
 
+    // Function to add new orders to an existing customer
+    private func addOrders(to customer: CustomerEntity) {
+        let flavors = [
+            ("Chocolate Chip", chocolateChipQuantity),
+            ("Sprinkle", sprinkleQuantity),
+            ("S'more", smoreQuantity)
+        ]
+
+        for (flavor, quantity) in flavors where quantity > 0 {
+            let newOrder = OrderEntity(context: viewContext)
+            newOrder.flavor = flavor
+            newOrder.quantity = Int16(quantity)
+            newOrder.customer = customer
+        }
+    }
+
+    // Function to create a new customer with an order
+    private func createNewCustomer() {
+        let newCustomer = CustomerEntity(context: viewContext)
+        newCustomer.id = UUID()
+        newCustomer.name = name
+        newCustomer.phone = phone
+        newCustomer.email = email
+        newCustomer.address = address
+        newCustomer.delivery = isDelivery
+        newCustomer.totalCost = totalCost
+
+        addOrders(to: newCustomer)
+    }
+
+    private func resetFields() {
+        name = ""
+        phone = ""
+        email = ""
+        address = ""
+        chocolateChipQuantity = 0
+        sprinkleQuantity = 0
+        smoreQuantity = 0
+        isNewCustomer = true
+    }
 }
 
 struct FlavorInputRow: View {
@@ -182,14 +212,23 @@ struct FlavorInputRow: View {
                 .font(.headline)
             Spacer()
             HStack(spacing: 10) {
-                Button(action: { if quantity > 0 { quantity -= 1 } }) {
+                // Decrement Button
+                Button(action: {
+                    if quantity > 0 { quantity -= 1 } // Decrease by 1
+                }) {
                     Image(systemName: "minus.circle")
-                        .foregroundColor(quantity > 0 ? .blue : .gray)
+                        .foregroundColor(quantity > 0 ? .blue : .gray) // Disable if at 0
                 }
+
+                // Quantity Display
                 Text("\(quantity)")
                     .frame(width: 40, alignment: .center)
                     .font(.headline)
-                Button(action: { quantity += 1 }) {
+
+                // Increment Button
+                Button(action: {
+                    quantity += 1 // Increase by 1
+                }) {
                     Image(systemName: "plus.circle")
                         .foregroundColor(.blue)
                 }
@@ -197,6 +236,7 @@ struct FlavorInputRow: View {
         }
     }
 }
+
 
 
 

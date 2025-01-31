@@ -2,31 +2,33 @@
 //  CustomerDetailView.swift
 //  CookieTracker
 //
-//  
-//
-
 import SwiftUI
 import CoreData
 
 struct CustomerDetailView: View {
     let customer: CustomerEntity
-    @Environment(\.openURL) var openURL // Environment to handle URL opening
+    @Environment(\.openURL) var openURL
 
-    // Calculate the total cost of the customer's order
+    // Compute total cost by consolidating orders
     var totalCost: Double {
-        // Safely convert orders to an array
-        let ordersArray = (customer.orders as? Set<OrderEntity>)?.compactMap { $0 } ?? []
-
-        // Calculate total cookies
-        let totalCookies = ordersArray.reduce(0) { $0 + Int($1.quantity) }
-        
-        // Cookie cost calculation ($2.50 per cookie)
+        let consolidatedOrders = consolidateOrders()
+        let totalCookies = consolidatedOrders.reduce(0) { $0 + $1.value }
         let cookieCost = Double(totalCookies) * 2.5
-        
-        // Delivery fee (if applicable)
         let deliveryFee = customer.delivery ? 6.0 : 0.0
-        
         return cookieCost + deliveryFee
+    }
+
+    // Function to consolidate orders by flavor
+    private func consolidateOrders() -> [String: Int] {
+        var orderSummary: [String: Int] = [:]
+        
+        if let ordersSet = customer.orders as? Set<OrderEntity> {
+            for order in ordersSet {
+                let flavor = order.flavor ?? "Unknown Flavor"
+                orderSummary[flavor, default: 0] += Int(order.quantity)
+            }
+        }
+        return orderSummary
     }
 
     var body: some View {
@@ -35,7 +37,6 @@ struct CustomerDetailView: View {
                 .font(.largeTitle)
                 .bold()
 
-            // Customer Information
             Group {
                 DetailRow(label: "Name", value: customer.name ?? "N/A")
                 DetailRow(label: "Phone", value: customer.phone ?? "N/A")
@@ -64,14 +65,18 @@ struct CustomerDetailView: View {
             Text("Orders")
                 .font(.headline)
 
-            // Ensure orders exist before iterating
-            if let ordersSet = customer.orders as? Set<OrderEntity>, !ordersSet.isEmpty {
-                let ordersArray = ordersSet.sorted { $0.flavor ?? "" < $1.flavor ?? "" } // Sort alphabetically
-                ForEach(ordersArray, id: \.flavor) { order in
+            let consolidatedOrders = consolidateOrders()
+
+            if consolidatedOrders.isEmpty {
+                Text("No orders placed.")
+                    .foregroundColor(.gray)
+                    .italic()
+            } else {
+                ForEach(consolidatedOrders.sorted(by: { $0.key < $1.key }), id: \.key) { flavor, quantity in
                     HStack {
-                        Text("\(order.flavor ?? "Unknown Flavor"):")
+                        Text("\(flavor):")
                         Spacer()
-                        Text("\(order.quantity) cookies")
+                        Text("\(quantity) cookies")
                     }
                 }
 
@@ -93,10 +98,6 @@ struct CustomerDetailView: View {
                         .font(.headline)
                         .foregroundColor(.blue)
                 }
-            } else {
-                Text("No orders placed.")
-                    .foregroundColor(.gray)
-                    .italic()
             }
 
             Spacer()
