@@ -7,28 +7,20 @@ import CoreData
 
 struct CustomerDetailView: View {
     let customer: CustomerEntity
-    @Environment(\.openURL) var openURL
+    @Environment(\.openURL) var openURL // Environment to handle URL opening
 
-    // Compute total cost by consolidating orders
+    // Calculate the total cost of the customer's order
     var totalCost: Double {
-        let consolidatedOrders = consolidateOrders()
-        let totalCookies = consolidatedOrders.reduce(0) { $0 + $1.value }
+        let ordersArray = (customer.orders as? Set<OrderEntity>)?.compactMap { $0 } ?? []
+        let totalCookies = ordersArray.reduce(0) { $0 + Int($1.quantity) }
         let cookieCost = Double(totalCookies) * 2.5
         let deliveryFee = customer.delivery ? 6.0 : 0.0
         return cookieCost + deliveryFee
     }
 
-    // Function to consolidate orders by flavor
-    private func consolidateOrders() -> [String: Int] {
-        var orderSummary: [String: Int] = [:]
-        
-        if let ordersSet = customer.orders as? Set<OrderEntity> {
-            for order in ordersSet {
-                let flavor = order.flavor ?? "Unknown Flavor"
-                orderSummary[flavor, default: 0] += Int(order.quantity)
-            }
-        }
-        return orderSummary
+    // Get the earliest promised by date from the customer's orders
+    var promisedByDate: Date? {
+        (customer.orders as? Set<OrderEntity>)?.compactMap { $0.promisedDate }.min()
     }
 
     var body: some View {
@@ -37,6 +29,7 @@ struct CustomerDetailView: View {
                 .font(.largeTitle)
                 .bold()
 
+            // Customer Information
             Group {
                 DetailRow(label: "Name", value: customer.name ?? "N/A")
                 DetailRow(label: "Phone", value: customer.phone ?? "N/A")
@@ -57,22 +50,35 @@ struct CustomerDetailView: View {
                     }
                     .padding(.vertical, 4)
                 }
+
+                // Display "Promised By" date under the address
+                if let promisedDate = promisedByDate {
+                    HStack {
+                        Text("Promised By")
+                            .font(.headline)
+                        Spacer()
+                        Text("\(promisedDate, formatter: DateFormatter.shortDate)")
+                            .font(.headline)
+                            .foregroundColor(.blue)
+                    }
+                    .padding(.vertical, 4)
+                }
             }
 
             Divider()
 
             // Order Details
-            Text("Orders")
+            Text("Order")
                 .font(.headline)
 
-            let consolidatedOrders = consolidateOrders()
+            if let ordersSet = customer.orders as? Set<OrderEntity>, !ordersSet.isEmpty {
+                let ordersArray = ordersSet
+                    .reduce(into: [String: Int]()) { result, order in
+                        result[order.flavor ?? "Unknown", default: 0] += Int(order.quantity)
+                    }
+                    .sorted { $0.key < $1.key } // Sort alphabetically
 
-            if consolidatedOrders.isEmpty {
-                Text("No orders placed.")
-                    .foregroundColor(.gray)
-                    .italic()
-            } else {
-                ForEach(consolidatedOrders.sorted(by: { $0.key < $1.key }), id: \.key) { flavor, quantity in
+                ForEach(ordersArray, id: \.key) { (flavor, quantity) in
                     HStack {
                         Text("\(flavor):")
                         Spacer()
@@ -98,6 +104,10 @@ struct CustomerDetailView: View {
                         .font(.headline)
                         .foregroundColor(.blue)
                 }
+            } else {
+                Text("No orders placed.")
+                    .foregroundColor(.gray)
+                    .italic()
             }
 
             Spacer()
@@ -131,6 +141,14 @@ struct DetailRow: View {
     }
 }
 
+// Date Formatter for displaying the "Promised By" date
+extension DateFormatter {
+    static let shortDate: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        return formatter
+    }()
+}
 
 
 

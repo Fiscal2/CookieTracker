@@ -24,6 +24,7 @@ struct OrderView: View {
     @State private var isNewCustomer = true
     @State private var showSuccessMessage = false
     @State private var showValidationError = false
+    @State private var promisedDate = Date()
 
     var isDelivery: Bool {
         !address.trimmingCharacters(in: .whitespaces).isEmpty
@@ -73,6 +74,17 @@ struct OrderView: View {
 
             Divider()
                 .padding(.vertical, 8)
+            
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Promised By:")
+                .font(.headline)
+
+                DatePicker("Select a Date", selection: $promisedDate, displayedComponents: .date)
+                .datePickerStyle(.compact)
+            }
+            
+            Divider()
+                    .padding(.vertical, 8)
 
             HStack {
                 Text("Total Cost:")
@@ -173,6 +185,7 @@ struct OrderView: View {
             newOrder.flavor = flavor
             newOrder.quantity = Int16(quantity)
             newOrder.customer = customer
+            newOrder.promisedDate = promisedDate
         }
     }
 
@@ -198,6 +211,7 @@ struct OrderView: View {
         chocolateChipQuantity = 0
         sprinkleQuantity = 0
         smoreQuantity = 0
+        promisedDate = Date()
         isNewCustomer = true
     }
 }
