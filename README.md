@@ -1,6 +1,7 @@
 🍪 CookieTracker
 
 A SwiftUI & Core Data-powered app for tracking customer orders and managing an order list.
+
 📌 Features
 
 ✅ Add & Manage Customers: Save customer details, including name, phone, email, and address.
