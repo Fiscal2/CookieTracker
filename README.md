@@ -5,9 +5,13 @@ A SwiftUI & Core Data-powered app for tracking customer orders and managing an o
 📌 Features
 
 ✅ Add & Manage Customers: Save customer details, including name, phone, email, and address.
+
 ✅ Track Orders: Store multiple orders per customer with different flavors and quantities.
+
 ✅ Pricing Calculation: Automatically calculates total cost based on cookie prices and delivery fees.
+
 ✅ Search Functionality: Easily search for customers in the customer list.
+
 ✅ Core Data Persistence: Customer and order data are stored locally using Core Data.
 
 🎯 Core Functionalities
@@ -44,10 +48,12 @@ A SwiftUI & Core Data-powered app for tracking customer orders and managing an o
     
 ⚡ Future Improvements
 
-🔹 Show multiple orders for same customer in Customer Detail View page.
-🔹 Add deliver by/pick up date and reminders sent through notification center.
+🔹 Add deliver by/pick up date reminders sent through notification center.
+
 🔹 Data Export (Export customer order history as a CSV or PDF).
+
 🔹 Cloud Sync (Use CloudKit to sync orders across devices).
+
 🔹 Revenue/Income tracking.
 
 
