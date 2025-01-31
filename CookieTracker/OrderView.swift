@@ -26,7 +26,7 @@ struct OrderView: View {
     @State private var showSuccessMessage = false
     @State private var showValidationError = false
     @State private var promisedDate = Date()
-
+    @State private var keyboardOffset: CGFloat = 0
 
     var isDelivery: Bool {
         !address.trimmingCharacters(in: .whitespaces).isEmpty
@@ -45,103 +45,122 @@ struct OrderView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Order").font(.largeTitle).bold()
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Order").font(.largeTitle).bold()
 
-            VStack(alignment: .leading, spacing: 16) {
-                TextField("Name", text: $name)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    VStack(alignment: .leading, spacing: 16) {
+                        TextField("Name", text: $name)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
 
-                TextField("Phone", text: $phone)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                        TextField("Phone", text: $phone)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .keyboardType(.phonePad)
 
-                TextField("Email", text: $email)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                        TextField("Email", text: $email)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .keyboardType(.emailAddress)
 
-                TextField("Address", text: $address)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-            }
+                        TextField("Address", text: $address)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                    }
 
-            Divider()
-                .padding(.vertical, 5)
-
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Choose Flavors (Minimum of 6 Total):")
-                    .font(.headline)
-
-                FlavorInputRow(flavor: "Chocolate Chip", quantity: $chocolateChipQuantity)
-                FlavorInputRow(flavor: "Sprinkle", quantity: $sprinkleQuantity)
-                FlavorInputRow(flavor: "S'more", quantity: $smoreQuantity)
-                FlavorInputRow(flavor: "Oreo", quantity: $oreoQuantity)
-            }
-            Divider()
                     .padding(.vertical, 5)
-            
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Promised By:")
-                .font(.headline)
 
-                DatePicker("Select a Date", selection: $promisedDate, displayedComponents: .date)
-                .datePickerStyle(.compact)
-            Divider()
-                    .padding(.vertical, 5)
-            }
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Choose Flavors (Minimum of 6 Total):")
+                            .font(.headline)
 
-            HStack {
-                Text("Total Cost:")
-                    .font(.headline)
-                Spacer()
-                Text("$\(String(format: "%.2f", totalCost))")
-                    .font(.headline)
-                    .foregroundColor(.blue)
-            }
+                        FlavorInputRow(flavor: "Chocolate Chip", quantity: $chocolateChipQuantity)
+                        FlavorInputRow(flavor: "Sprinkle", quantity: $sprinkleQuantity)
+                        FlavorInputRow(flavor: "S'more", quantity: $smoreQuantity)
+                        FlavorInputRow(flavor: "Oreo", quantity: $oreoQuantity)
+                    }
 
-            if isDelivery {
-                Text("Includes $6 delivery fee")
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
-            }
+                    Divider().padding(.vertical, 5)
 
-            Divider()
-                .padding(.vertical, 8)
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Promised By:")
+                            .font(.headline)
 
-            if showValidationError {
-                Text("Error: Please fill all required fields and ensure at least 6 cookies are ordered.")
-                    .foregroundColor(.red)
-                    .font(.subheadline)
-            }
+                        DatePicker("Select a Date", selection: $promisedDate, displayedComponents: .date)
+                            .datePickerStyle(.compact)
 
-            if showSuccessMessage {
-                HStack {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
-                    Text("Customer Created")
-                        .foregroundColor(.green)
-                        .font(.headline)
+                        
+                    }
+                    
+                    Divider().padding(.vertical, 5)
+
+                    HStack {
+                        Text("Total Cost:")
+                            .font(.headline)
+                        Spacer()
+                        Text("$\(String(format: "%.2f", totalCost))")
+                            .font(.headline)
+                            .foregroundColor(.blue)
+                    }
+
+                    if isDelivery {
+                        Text("Includes $6 delivery fee")
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                    }
+
+                    Divider().padding(.vertical, 6)
+
+                    if showValidationError {
+                        Text("Error: Please fill all required fields and ensure at least 6 cookies are ordered.")
+                            .foregroundColor(.red)
+                            .font(.subheadline)
+                    }
+
+                    if showSuccessMessage {
+                        HStack {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                            Text("Customer Created")
+                                .foregroundColor(.green)
+                                .font(.headline)
+                        }
+                        .transition(.opacity)
+                    }
+
+                    Button(action: saveOrder) {
+                        Text("Add Customer & Order")
+                            .frame(maxWidth: .infinity, minHeight: 20)
+                            .padding()
+                            .background(isValidOrder ? Color.blue : Color.gray)
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
+                    }
+                    .disabled(!isValidOrder)
+                    .padding(.bottom, 18)
+
+                    Spacer()
                 }
-                .transition(.opacity)
+                .padding()
+                .padding(.bottom, keyboardOffset) // Adjusts based on keyboard height
+                .onAppear { observeKeyboard() } // Detect keyboard
             }
-
-            Button(action: saveOrder) {
-                Text("Add Customer & Order")
-                    .frame(maxWidth: .infinity, minHeight: 20)
-                    .padding()
-                    .background(isValidOrder ? Color.blue : Color.gray)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
-            }
-            .disabled(!isValidOrder)
-            .padding(.bottom, 20)
-
-            Spacer()
         }
-        .padding()
+    }
+
+    private func observeKeyboard() {
+        NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { notification in
+            if let keyboardSize = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
+                keyboardOffset = keyboardSize.height * 0.4 // Moves screen up
+            }
+        }
+
+        NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { _ in
+            keyboardOffset = 0
+        }
     }
 
     private func saveOrder() {
-        let newTotal = chocolateChipQuantity + sprinkleQuantity + smoreQuantity
+        let newTotal = chocolateChipQuantity + sprinkleQuantity + smoreQuantity + oreoQuantity
         
-        // Ensure the order meets the 6-cookie minimum
         guard newTotal >= 6 else {
             showValidationError = true
             return
@@ -162,7 +181,6 @@ struct OrderView: View {
             try viewContext.save()
             showSuccessMessage = true
             showValidationError = false
-
             resetFields()
 
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
@@ -173,7 +191,6 @@ struct OrderView: View {
         }
     }
 
-    // Function to add new orders to an existing customer
     private func addOrders(to customer: CustomerEntity) {
         let flavors = [
             ("Chocolate Chip", chocolateChipQuantity),
@@ -191,7 +208,6 @@ struct OrderView: View {
         }
     }
 
-    // Function to create a new customer with an order
     private func createNewCustomer() {
         let newCustomer = CustomerEntity(context: viewContext)
         newCustomer.id = UUID()
@@ -218,6 +234,7 @@ struct OrderView: View {
         isNewCustomer = true
     }
 }
+
 
 struct FlavorInputRow: View {
     let flavor: String
