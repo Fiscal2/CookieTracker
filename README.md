@@ -48,10 +48,12 @@ A SwiftUI & Core Data-powered app for tracking customer orders and managing an o
     
 ⚡ Future Improvements
 
-🔹 Show multiple orders for same customer in Customer Detail View page.
-🔹 Add deliver by/pick up date and reminders sent through notification center.
+🔹 Add deliver by/pick up date reminders sent through notification center.
+
 🔹 Data Export (Export customer order history as a CSV or PDF).
+
 🔹 Cloud Sync (Use CloudKit to sync orders across devices).
+
 🔹 Revenue/Income tracking.
 
 
