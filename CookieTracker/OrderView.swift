@@ -21,10 +21,12 @@ struct OrderView: View {
     @State private var chocolateChipQuantity = 0
     @State private var sprinkleQuantity = 0
     @State private var smoreQuantity = 0
+    @State private var oreoQuantity = 0
     @State private var isNewCustomer = true
     @State private var showSuccessMessage = false
     @State private var showValidationError = false
     @State private var promisedDate = Date()
+
 
     var isDelivery: Bool {
         !address.trimmingCharacters(in: .whitespaces).isEmpty
@@ -61,7 +63,7 @@ struct OrderView: View {
             }
 
             Divider()
-                .padding(.vertical, 8)
+                .padding(.vertical, 5)
 
             VStack(alignment: .leading, spacing: 10) {
                 Text("Choose Flavors (Minimum of 6 Total):")
@@ -70,10 +72,10 @@ struct OrderView: View {
                 FlavorInputRow(flavor: "Chocolate Chip", quantity: $chocolateChipQuantity)
                 FlavorInputRow(flavor: "Sprinkle", quantity: $sprinkleQuantity)
                 FlavorInputRow(flavor: "S'more", quantity: $smoreQuantity)
+                FlavorInputRow(flavor: "Oreo", quantity: $oreoQuantity)
             }
-
             Divider()
-                .padding(.vertical, 8)
+                    .padding(.vertical, 5)
             
             VStack(alignment: .leading, spacing: 10) {
                 Text("Promised By:")
@@ -81,10 +83,9 @@ struct OrderView: View {
 
                 DatePicker("Select a Date", selection: $promisedDate, displayedComponents: .date)
                 .datePickerStyle(.compact)
-            }
-            
             Divider()
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 5)
+            }
 
             HStack {
                 Text("Total Cost:")
@@ -177,7 +178,8 @@ struct OrderView: View {
         let flavors = [
             ("Chocolate Chip", chocolateChipQuantity),
             ("Sprinkle", sprinkleQuantity),
-            ("S'more", smoreQuantity)
+            ("S'more", smoreQuantity),
+            ("Oreo", oreoQuantity)
         ]
 
         for (flavor, quantity) in flavors where quantity > 0 {
@@ -211,6 +213,7 @@ struct OrderView: View {
         chocolateChipQuantity = 0
         sprinkleQuantity = 0
         smoreQuantity = 0
+        oreoQuantity = 0
         promisedDate = Date()
         isNewCustomer = true
     }
