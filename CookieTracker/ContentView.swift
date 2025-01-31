@@ -7,6 +7,8 @@
 import SwiftUI
 
 struct ContentView: View {
+    @AppStorage("isDarkMode") private var isDarkMode = false
+    
     let viewContext = CoreDataStack.shared.persistentContainer.viewContext
 
     var body: some View {
@@ -25,11 +27,12 @@ struct ContentView: View {
                 }
                 .environment(\.managedObjectContext, viewContext)
 
-            Text("Settings")
+            SettingsView()
                 .tabItem {
                     Image(systemName: "gearshape")
                     Text("Settings")
                 }
+                .preferredColorScheme(isDarkMode ? .dark : .light)
         }
     }
 }

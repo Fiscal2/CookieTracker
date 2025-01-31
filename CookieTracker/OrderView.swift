@@ -33,14 +33,14 @@ struct OrderView: View {
     }
 
     var totalCost: Double {
-        let totalCookies = chocolateChipQuantity + sprinkleQuantity + smoreQuantity
+        let totalCookies = chocolateChipQuantity + sprinkleQuantity + smoreQuantity + oreoQuantity
         let cookieCost = Double(totalCookies) * 2.5
         let deliveryFee = isDelivery ? 6.0 : 0.0
         return cookieCost + deliveryFee
     }
 
     private var isValidOrder: Bool {
-        let newTotal = chocolateChipQuantity + sprinkleQuantity + smoreQuantity
+        let newTotal = chocolateChipQuantity + sprinkleQuantity + smoreQuantity + oreoQuantity
         return newTotal >= 6
     }
 

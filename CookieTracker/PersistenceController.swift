@@ -4,6 +4,7 @@
 //
 //
 //
+import SwiftUI
 import CoreData
 
 // Define an observable class to encapsulate all Core Data-related functionality.
