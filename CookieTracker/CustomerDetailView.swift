@@ -7,20 +7,48 @@ import CoreData
 
 struct CustomerDetailView: View {
     let customer: CustomerEntity
-    @Environment(\.openURL) var openURL // Environment to handle URL opening
+    @Environment(\.openURL) var openURL
+    @State private var selectedOrderDate: Date? // Tracks tapped order date
+    @State private var showOrderDetails = false // Controls pop-up visibility
 
-    // Calculate the total cost of the customer's order
     var totalCost: Double {
-        let ordersArray = (customer.orders as? Set<OrderEntity>)?.compactMap { $0 } ?? []
+        let ordersArray = (customer.orders as? Set<OrderEntity>) ?? []
         let totalCookies = ordersArray.reduce(0) { $0 + Int($1.quantity) }
         let cookieCost = Double(totalCookies) * 2.5
         let deliveryFee = customer.delivery ? 6.0 : 0.0
         return cookieCost + deliveryFee
     }
 
-    // Get the earliest promised by date from the customer's orders
-    var promisedByDate: Date? {
-        (customer.orders as? Set<OrderEntity>)?.compactMap { $0.promisedDate }.min()
+    var groupedOrdersByDate: [(date: Date, totalCookies: Int, totalCost: Double)] {
+        let ordersArray = (customer.orders as? Set<OrderEntity>) ?? []
+
+        let ordersWithDates = ordersArray.compactMap { order -> (Date, OrderEntity)? in
+            guard let promisedDate = order.promisedDate else { return nil }
+            return (promisedDate, order)
+        }
+
+        let groupedDictionary = Dictionary(grouping: ordersWithDates, by: { $0.0 })
+
+        return groupedDictionary
+            .map { (date, groupedOrders) in
+                let totalCookies = groupedOrders.reduce(0) { $0 + Int($1.1.quantity) }
+                let totalCost = Double(totalCookies) * 2.5
+                return (date: date, totalCookies: totalCookies, totalCost: totalCost)
+            }
+            .sorted { $0.date < $1.date }
+    }
+
+    var mergedOrders: [(flavor: String, quantity: Int)] {
+        let ordersArray = (customer.orders as? Set<OrderEntity>) ?? []
+
+        let groupedDictionary = Dictionary(grouping: ordersArray, by: { $0.flavor ?? "Unknown" })
+
+        return groupedDictionary
+            .map { (flavor, groupedOrders) in
+                let totalQuantity = groupedOrders.reduce(0) { $0 + Int($1.quantity) }
+                return (flavor: flavor, quantity: totalQuantity)
+            }
+            .sorted { $0.flavor < $1.flavor }
     }
 
     var body: some View {
@@ -29,7 +57,6 @@ struct CustomerDetailView: View {
                 .font(.largeTitle)
                 .bold()
 
-            // Customer Information
             Group {
                 DetailRow(label: "Name", value: customer.name ?? "N/A")
                 DetailRow(label: "Phone", value: customer.phone ?? "N/A")
@@ -50,79 +77,149 @@ struct CustomerDetailView: View {
                     }
                     .padding(.vertical, 4)
                 }
-
-                // Display "Promised By" date under the address
-                if let promisedDate = promisedByDate {
-                    HStack {
-                        Text("Promised By")
+                Divider()
+                if !groupedOrdersByDate.isEmpty {
+                    VStack(alignment: .leading) {
+                        Text("Orders Summary")
                             .font(.headline)
-                        Spacer()
-                        Text("\(promisedDate, formatter: DateFormatter.shortDate)")
-                            .font(.headline)
-                            .foregroundColor(.blue)
+                        ForEach(groupedOrdersByDate, id: \.date) { group in
+                            HStack {
+                                // 🔥 Make the order clickable
+                                Button(action: {
+                                    selectedOrderDate = group.date
+                                    showOrderDetails = true
+                                }) {
+                                    Text("- \(group.totalCookies) cookies")
+                                        .foregroundColor(.blue)
+                                        .bold()
+                                }
+                                Spacer()
+                                Text("$\(String(format: "%.2f", group.totalCost))")
+                                    .bold()
+                                    .foregroundColor(.blue)
+                                Text("for \(formattedDate(group.date))")
+                                    .foregroundColor(.gray)
+                            }
+                        }
                     }
-                    .padding(.vertical, 4)
                 }
+            }
+
+            if !mergedOrders.isEmpty {
+                Divider()
+                Text("Orders")
+                    .font(.headline)
+
+                ForEach(mergedOrders, id: \.flavor) { order in
+                    HStack {
+                        Text("\(order.flavor):")
+                        Spacer()
+                        Text("\(order.quantity) cookies")
+                    }
+                }
+            }
+
+            if customer.delivery {
+                Text("Delivery Fee: $6")
+                    .foregroundColor(.blue)
             }
 
             Divider()
 
-            // Order Details
-            Text("Order")
-                .font(.headline)
-
-            if let ordersSet = customer.orders as? Set<OrderEntity>, !ordersSet.isEmpty {
-                let ordersArray = ordersSet
-                    .reduce(into: [String: Int]()) { result, order in
-                        result[order.flavor ?? "Unknown", default: 0] += Int(order.quantity)
-                    }
-                    .sorted { $0.key < $1.key } // Sort alphabetically
-
-                ForEach(ordersArray, id: \.key) { (flavor, quantity) in
-                    HStack {
-                        Text("\(flavor):")
-                        Spacer()
-                        Text("\(quantity) cookies")
-                    }
-                }
-
-                Divider()
-
-                if customer.delivery {
-                    Text("Delivery Fee: $6")
-                        .foregroundColor(.blue)
-                }
-
-                Divider()
-
-                // Total Cost
-                HStack {
-                    Text("Total Cost:")
-                        .font(.headline)
-                    Spacer()
-                    Text("$\(String(format: "%.2f", totalCost))")
-                        .font(.headline)
-                        .foregroundColor(.blue)
-                }
-            } else {
-                Text("No orders placed.")
-                    .foregroundColor(.gray)
-                    .italic()
+            HStack {
+                Text("Total Cost:")
+                    .font(.headline)
+                Spacer()
+                Text("$\(String(format: "%.2f", totalCost))")
+                    .font(.headline)
+                    .foregroundColor(.blue)
             }
 
             Spacer()
         }
         .padding()
+        .sheet(isPresented: $showOrderDetails) {
+            if let selectedDate = selectedOrderDate {
+                OrderDetailPopupView(customer: customer, selectedDate: selectedDate)
+            }
+        }
     }
 
-    // Function to open the address in Apple Maps
     private func openAddressInMaps(_ address: String) {
         let formattedAddress = address.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         if let url = URL(string: "http://maps.apple.com/?address=\(formattedAddress)") {
             openURL(url)
         }
     }
+
+    private func formattedDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM dd"
+        return formatter.string(from: date)
+    }
 }
+
+// Order Detail Pop-Up
+struct OrderDetailPopupView: View {
+    let customer: CustomerEntity
+    let selectedDate: Date
+    @Environment(\.dismiss) var dismiss
+
+    var ordersForDate: [(flavor: String, quantity: Int)] {
+        let ordersArray = (customer.orders as? Set<OrderEntity>) ?? []
+
+        let filteredOrders = ordersArray.filter { $0.promisedDate == selectedDate }
+
+        let groupedDictionary = Dictionary(grouping: filteredOrders, by: { $0.flavor ?? "Unknown" })
+
+        return groupedDictionary
+            .map { (flavor, groupedOrders) in
+                let totalQuantity = groupedOrders.reduce(0) { $0 + Int($1.quantity) }
+                return (flavor: flavor, quantity: totalQuantity)
+            }
+            .sorted { $0.flavor < $1.flavor }
+    }
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Text("Order Details for \(formattedDate(selectedDate))")
+                .font(.headline)
+                .padding()
+
+            if !ordersForDate.isEmpty {
+                ForEach(ordersForDate, id: \.flavor) { order in
+                    HStack {
+                        Text(order.flavor)
+                        Spacer()
+                        Text("\(order.quantity) cookies")
+                    }
+                    .padding(.horizontal)
+                }
+            } else {
+                Text("No orders found for this date.")
+                    .foregroundColor(.gray)
+            }
+
+            Spacer()
+
+            Button("Close") {
+                dismiss()
+            }
+            .padding()
+            .background(Color.blue)
+            .foregroundColor(.white)
+            .cornerRadius(10)
+        }
+        .padding()
+    }
+
+    private func formattedDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM dd"
+        return formatter.string(from: date)
+    }
+}
+
 
 // A reusable view for customer detail rows
 struct DetailRow: View {
@@ -140,6 +237,8 @@ struct DetailRow: View {
         .padding(.vertical, 4)
     }
 }
+
+
 
 // Date Formatter for displaying the "Promised By" date
 extension DateFormatter {
