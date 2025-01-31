@@ -11,6 +11,7 @@ A SwiftUI & Core Data-powered app for tracking customer orders and managing an o
 ✅ Core Data Persistence: Customer and order data are stored locally using Core Data.
 
 🎯 Core Functionalities
+
 1️⃣ Add a Customer & Order
 
     Enter customer details (name, phone, email, address).
