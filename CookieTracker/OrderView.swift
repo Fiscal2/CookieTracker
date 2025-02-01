@@ -27,10 +27,8 @@ struct OrderView: View {
     @State private var showValidationError = false
     @State private var promisedDate = Date()
     @State private var keyboardOffset: CGFloat = 0
+    @State private var isDelivery = false
 
-    var isDelivery: Bool {
-        !address.trimmingCharacters(in: .whitespaces).isEmpty
-    }
 
     var totalCost: Double {
         let totalCookies = chocolateChipQuantity + sprinkleQuantity + smoreQuantity + oreoQuantity
@@ -72,22 +70,28 @@ struct OrderView: View {
                         Text("Choose Flavors (Minimum of 6 Total):")
                             .font(.headline)
 
-                        FlavorInputRow(flavor: "Chocolate Chip", quantity: $chocolateChipQuantity)
-                        FlavorInputRow(flavor: "Sprinkle", quantity: $sprinkleQuantity)
-                        FlavorInputRow(flavor: "S'more", quantity: $smoreQuantity)
-                        FlavorInputRow(flavor: "Oreo", quantity: $oreoQuantity)
+                        FlavorInputRow(flavor: OrderConstants.chocolateChip, quantity: $chocolateChipQuantity)
+                        FlavorInputRow(flavor: OrderConstants.sprinkle, quantity: $sprinkleQuantity)
+                        FlavorInputRow(flavor: OrderConstants.smore, quantity: $smoreQuantity)
+                        FlavorInputRow(flavor: OrderConstants.oreo, quantity: $oreoQuantity)
                     }
+                    
 
                     Divider().padding(.vertical, 5)
 
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Promised By:")
                             .font(.headline)
+                        
+                        Toggle(isOn: $isDelivery) {
+                            Text("Delivery")
+                        }
+                        .toggleStyle(SwitchToggleStyle())
+                        
 
                         DatePicker("Select a Date", selection: $promisedDate, displayedComponents: .date)
                             .datePickerStyle(.compact)
 
-                        
                     }
                     
                     Divider().padding(.vertical, 5)
@@ -185,18 +189,17 @@ struct OrderView: View {
             let existingCustomers = try viewContext.fetch(fetchRequest)
 
             if let existingCustomer = existingCustomers.first {
-                addOrders(to: existingCustomer)
+                addOrder(to: existingCustomer)
             } else {
                 let newCustomer = CustomerEntity(context: viewContext)
                 newCustomer.id = UUID()
                 newCustomer.name = name
-                newCustomer.phone = formatPhoneNumber(phone) // 🔹 Format phone before saving
+                newCustomer.phone = formatPhoneNumber(phone) // Format phone before saving
                 newCustomer.email = email
                 newCustomer.address = address
-                newCustomer.delivery = isDelivery
                 newCustomer.totalCost = totalCost
 
-                addOrders(to: newCustomer)
+                addOrder(to: newCustomer)
             }
 
             try viewContext.save()
@@ -211,23 +214,30 @@ struct OrderView: View {
             print("Error saving order: \(error.localizedDescription)")
         }
     }
+    
+    private func addOrder(to customer: CustomerEntity){
+        let newOrder = OrderEntity(context: viewContext)
+        newOrder.customer = customer
+        newOrder.promisedDate = promisedDate
+        addCookies (to: newOrder)
+    }
 
-
-    private func addOrders(to customer: CustomerEntity) {
-        let flavors = [
-            ("Chocolate Chip", chocolateChipQuantity),
+    private func addCookies(to order: OrderEntity) {
+        let cookies = [
+            (OrderConstants.chocolateChip, chocolateChipQuantity),
             ("Sprinkle", sprinkleQuantity),
             ("S'more", smoreQuantity),
             ("Oreo", oreoQuantity)
         ]
-
-        for (flavor, quantity) in flavors where quantity > 0 {
-            let newOrder = OrderEntity(context: viewContext)
-            newOrder.flavor = flavor
-            newOrder.quantity = Int16(quantity)
-            newOrder.customer = customer
-            newOrder.promisedDate = promisedDate
+        
+        for (flavor, quantity) in cookies {
+            let newCookie = CookieEntity(context: viewContext)
+            newCookie.flavor = flavor
+            newCookie.quantity = Double(quantity)
+            newCookie.totalCost = Double(quantity) * 2.5
+        
         }
+        
     }
 
     private func createNewCustomer() {
@@ -237,10 +247,9 @@ struct OrderView: View {
         newCustomer.phone = phone
         newCustomer.email = email
         newCustomer.address = address
-        newCustomer.delivery = isDelivery
         newCustomer.totalCost = totalCost
 
-        addOrders(to: newCustomer)
+        addOrder(to: newCustomer)
     }
 
     private func resetFields() {
@@ -254,6 +263,7 @@ struct OrderView: View {
         oreoQuantity = 0
         promisedDate = Date()
         isNewCustomer = true
+        isDelivery = false
     }
 }
 

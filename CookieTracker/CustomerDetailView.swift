@@ -32,8 +32,7 @@ struct CustomerDetailView: View {
         let ordersArray = (customer.orders as? Set<OrderEntity>) ?? []
         let totalCookies = ordersArray.reduce(0) { $0 + Int($1.quantity) }
         let cookieCost = Double(totalCookies) * 2.5
-        let deliveryFee = customer.delivery ? 6.0 : 0.0
-        return cookieCost + deliveryFee
+        return cookieCost
     }
 
     var lazyColumns: [GridItem] = [
@@ -116,17 +115,16 @@ struct CustomerDetailView: View {
                 .font(.headline)
 
             let ordersArray = (customer.orders as? Set<OrderEntity>) ?? []
-            let groupedOrders = Dictionary(grouping: ordersArray, by: { $0.promisedDate ?? Date() })
+            ForEach(ordersArray.sorted(by: ))
 
             ForEach(groupedOrders.sorted(by: { $0.key < $1.key }), id: \.key) { date, orders in
                 let totalCookies = orders.reduce(0) { $0 + Int($1.quantity) }
-                let totalCost = Double(totalCookies) * 2.5 + (customer.delivery ? 6.0 : 0.0)
+                let totalCost = Double(totalCookies) * 2.5
 
                 HStack {
                     Button(action: {
                         selectedOrderDetails = orders.map { ($0.flavor ?? "Unknown", Int($0.quantity)) }
                         selectedOrderDate = date
-                        selectedOrderDelivery = customer.delivery
                         showOrderPopup = true
                     }) {
                         Text("\(totalCookies) cookies")
@@ -247,8 +245,63 @@ struct CustomerDetailView: View {
             .padding()
             .presentationDetents([.medium])
         }
-        
+        // Order Details Pop-Up (For Clicking "12 Cookies, 6 Cookies, etc.")
+        .sheet(isPresented: $showOrderPopup) {
+            VStack(spacing: 12) {
+                Text("Order Details for \(formattedDate(selectedOrderDate))")
+                    .font(.headline)
+                    .padding(.top)
+
+                // Delivery Status
+                if selectedOrderDelivery {
+                    HStack {
+                        Text("🏠 Home Delivery")
+                            .foregroundColor(.blue)
+                            .bold()
+                    }
+                } else {
+                    HStack {
+                        Text("🚗 Pickup")
+                            .foregroundColor(.blue)
+                            .bold()
+                    }
+                }
+
+                Divider()
+
+                // List of Flavors & Quantities
+                ForEach(selectedOrderDetails, id: \.0) { flavor, quantity in
+                    DetailRow(label: "\(flavor):", value: "\(quantity)")
+                }
+                
+                if selectedOrderDelivery {
+                    DetailRow(label: "Delivery Fee:", value: "$6")
+                }
+
+                Spacer()
+
+                // Close Button
+                Button("Close") {
+                    showOrderPopup = false
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color.blue)
+                .foregroundColor(.white)
+                .cornerRadius(8)
+                .padding(.horizontal)
+                .contentShape(Rectangle()) // Ensures full button is tappable
+
+            }
+            .padding()
+            .presentationDetents([.medium]) // Half-screen pop-up
+        }
     }
+    
+    private func checkWordLimit() {
+            let words = noteText.split(separator: " ").count
+            noteTooLong = words > 10
+        }
 
     private func saveCustomerChanges() {
         customer.name = editedName
@@ -290,13 +343,4 @@ struct DetailRow: View {
         }
         .padding(.vertical, 4)
     }
-}
-
-// Date Formatter for displaying the "Promised By" date
-extension DateFormatter {
-    static let shortDate: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        return formatter
-    }()
 }
