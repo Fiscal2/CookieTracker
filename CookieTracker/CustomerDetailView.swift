@@ -7,14 +7,22 @@ import CoreData
 
 struct CustomerDetailView: View {
     let customer: CustomerEntity
+    @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.openURL) var openURL
 
-    // State for notes
+    // State for Editing Customer
+    @State private var showEditCustomerPopup = false
+    @State private var editedName = ""
+    @State private var editedPhone = ""
+    @State private var editedEmail = ""
+    @State private var editedAddress = ""
+
+    // State for Order Notes
     @State private var showNotePopup = false
     @State private var noteText = ""
     @State private var noteTooLong = false
 
-    // State for order details pop-up
+    // State for Order Details Pop-Up
     @State private var showOrderPopup = false
     @State private var selectedOrderDetails: [(String, Int)] = []
     @State private var selectedOrderDate: Date = Date()
@@ -28,18 +36,26 @@ struct CustomerDetailView: View {
         return cookieCost + deliveryFee
     }
 
+    var lazyColumns: [GridItem] = [
+        GridItem(.flexible(), spacing: 16),
+        GridItem(.flexible(), spacing: 16)
+    ]
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Title with Floating "Write Note" Button
+            // Title with Floating "Edit Customer" Button
             HStack {
                 Text("Customer Details")
                     .font(.largeTitle)
                     .bold()
                 Spacer()
-                // Floating "Write Note" Button
+                // Floating "Edit Customer" Button
                 Button(action: {
-                    noteText = customer.note ?? ""
-                    showNotePopup = true
+                    editedName = customer.name ?? ""
+                    editedPhone = customer.phone ?? ""
+                    editedEmail = customer.email ?? ""
+                    editedAddress = customer.address ?? ""
+                    showEditCustomerPopup = true
                 }) {
                     Image(systemName: "square.and.pencil")
                         .font(.title2)
@@ -52,15 +68,17 @@ struct CustomerDetailView: View {
 
             // Customer Information
             Group {
-                DetailRow(label: "Name", value: customer.name ?? "N/A")
-                DetailRow(label: "Phone", value: customer.phone ?? "N/A")
-                DetailRow(label: "Email", value: customer.email ?? "N/A")
+                LazyVGrid(columns: lazyColumns, alignment: .leading, spacing: 16) {
+                    DetailRow(label: "Name", value: customer.name ?? "N/A")
+                    DetailRow(label: "Phone", value: customer.phone ?? "N/A")
+                    DetailRow(label: "Email", value: customer.email ?? "N/A").frame(minWidth: 200, maxWidth: .infinity, alignment: .leading)
+                }
 
                 if let address = customer.address, !address.isEmpty {
                     HStack {
                         Text("Address")
                             .font(.headline)
-                        Spacer()
+
                         Button(action: {
                             openAddressInMaps(address)
                         }) {
@@ -71,6 +89,24 @@ struct CustomerDetailView: View {
                     }
                     .padding(.vertical, 4)
                 }
+
+                // "Order Note" Button
+                Button(action: {
+                    noteText = customer.note ?? ""
+                    showNotePopup = true
+                }) {
+                    HStack {
+                        Image(systemName: "note.text")
+                            .foregroundColor(.blue)
+                        Text("Order Note")
+                            .foregroundColor(.blue)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(8)
+                    .background(Color.blue.opacity(0.15))
+                    .cornerRadius(10)
+                }
+                .buttonStyle(PlainButtonStyle())
             }
 
             Divider()
@@ -81,7 +117,7 @@ struct CustomerDetailView: View {
 
             let ordersArray = (customer.orders as? Set<OrderEntity>) ?? []
             let groupedOrders = Dictionary(grouping: ordersArray, by: { $0.promisedDate ?? Date() })
-            
+
             ForEach(groupedOrders.sorted(by: { $0.key < $1.key }), id: \.key) { date, orders in
                 let totalCookies = orders.reduce(0) { $0 + Int($1.quantity) }
                 let totalCost = Double(totalCookies) * 2.5
@@ -93,7 +129,7 @@ struct CustomerDetailView: View {
                         selectedOrderDelivery = customer.delivery
                         showOrderPopup = true
                     }) {
-                        Text("- \(totalCookies) cookies")
+                        Text("\(totalCookies) cookies")
                             .foregroundColor(.blue)
                     }
                     Spacer()
@@ -114,11 +150,9 @@ struct CustomerDetailView: View {
             let consolidatedOrders = Dictionary(grouping: ordersArray, by: { $0.flavor ?? "Unknown" })
                 .mapValues { $0.reduce(0) { $0 + Int($1.quantity) } }
 
-            ForEach(consolidatedOrders.sorted(by: { $0.key < $1.key }), id: \.key) { flavor, quantity in
-                HStack {
-                    Text("\(flavor):")
-                    Spacer()
-                    Text("\(quantity) cookies")
+            LazyVGrid(columns: lazyColumns, alignment: .leading, spacing: 16) {
+                ForEach(consolidatedOrders.sorted(by: { $0.key < $1.key }), id: \.key) { flavor, quantity in
+                    DetailRow(label: "\(flavor):", value: "\(quantity)")
                 }
             }
 
@@ -144,8 +178,48 @@ struct CustomerDetailView: View {
             Spacer()
         }
         .padding()
-        
-        // Note Pop-Up
+
+        // Edit Customer Pop-Up
+        .sheet(isPresented: $showEditCustomerPopup) {
+            VStack(spacing: 8) {
+                Text("Edit Customer")
+                    .font(.headline)
+                    .padding(.top)
+
+                TextField("Name", text: $editedName)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding()
+
+                TextField("Phone", text: $editedPhone)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding()
+
+                TextField("Email", text: $editedEmail)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding()
+
+                TextField("Address", text: $editedAddress)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding()
+
+                Button("Save") {
+                    saveCustomerChanges()
+                    showEditCustomerPopup = false
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color.blue)
+                .foregroundColor(.white)
+                .cornerRadius(8)
+                .padding(.horizontal)
+
+                Spacer()
+            }
+            .padding()
+            .presentationDetents([.medium])
+        }
+
+        // Order Note Pop-Up**
         .sheet(isPresented: $showNotePopup) {
             VStack(spacing: 8) {
                 Text("Order Note (Max 10 Words)")
@@ -156,10 +230,7 @@ struct CustomerDetailView: View {
                     .frame(height: 100)
                     .border(Color.gray, width: 1)
                     .padding()
-                    .onChange(of: noteText) {
-                        checkWordLimit()
-                    }
-
+                
                 if noteTooLong {
                     Text("⚠️ Note cannot exceed 10 words.")
                         .foregroundColor(.red)
@@ -168,64 +239,8 @@ struct CustomerDetailView: View {
                 }
 
                 Button("Save") {
-                    if !noteTooLong {
-                        saveNote()
-                        showNotePopup = false
-                    }
-                }
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(noteTooLong ? Color.gray : Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(8)
-                .padding(.horizontal)
-                .disabled(noteTooLong)
-                .contentShape(Rectangle()) // Ensures full button is tappable
-
-                Spacer()
-            }
-            .padding()
-            .presentationDetents([.medium]) // Half-screen pop-up
-        }
-        
-        // Order Details Pop-Up (For Clicking "12 Cookies, 6 Cookies, etc.")
-        .sheet(isPresented: $showOrderPopup) {
-            VStack(spacing: 12) {
-                Text("Order Details for \(formattedDate(selectedOrderDate))")
-                    .font(.headline)
-                    .padding(.top)
-
-                // Delivery Status
-                if selectedOrderDelivery {
-                    HStack {
-                        Text("🏠 Home Delivery")
-                            .foregroundColor(.blue)
-                            .bold()
-                    }
-                } else {
-                    HStack {
-                        Text("🚗 Pickup")
-                            .foregroundColor(.blue)
-                            .bold()
-                    }
-                }
-
-                Divider()
-
-                // List of Flavors & Quantities
-                ForEach(selectedOrderDetails, id: \.0) { flavor, quantity in
-                    HStack {
-                        Text(flavor)
-                        Spacer()
-                        Text("\(quantity) cookies")
-                    }
-                }
-
-                Spacer()
-
-                // Close Button
-                Button("Close") {
-                    showOrderPopup = false
+                    saveNote()
+                    showNotePopup = false
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
@@ -233,27 +248,31 @@ struct CustomerDetailView: View {
                 .foregroundColor(.white)
                 .cornerRadius(8)
                 .padding(.horizontal)
-                .contentShape(Rectangle()) // Ensures full button is tappable
 
+                Spacer()
             }
             .padding()
-            .presentationDetents([.medium]) // Half-screen pop-up
+            .presentationDetents([.medium])
         }
+        
     }
 
-    private func checkWordLimit() {
-        let words = noteText.split(separator: " ").count
-        noteTooLong = words > 10
+    private func saveCustomerChanges() {
+        customer.name = editedName
+        customer.phone = editedPhone
+        customer.email = editedEmail
+        customer.address = editedAddress
+        try? viewContext.save()
     }
 
     private func saveNote() {
         customer.note = noteText
-        try? customer.managedObjectContext?.save()
+        try? viewContext.save()
     }
 
     private func formattedDate(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "MMM dd"
+        formatter.dateFormat = "MMM dd, yyyy"
         return formatter.string(from: date)
     }
 
@@ -265,9 +284,6 @@ struct CustomerDetailView: View {
     }
 }
 
-
-
-// A reusable view for customer detail rows
 struct DetailRow: View {
     let label: String
     let value: String
@@ -276,16 +292,12 @@ struct DetailRow: View {
         HStack {
             Text(label)
                 .font(.headline)
-            Spacer()
             Text(value)
                 .foregroundColor(.blue)
         }
         .padding(.vertical, 4)
     }
 }
-
-
-
 
 // Date Formatter for displaying the "Promised By" date
 extension DateFormatter {
@@ -295,8 +307,3 @@ extension DateFormatter {
         return formatter
     }()
 }
-
-
-
-
-
