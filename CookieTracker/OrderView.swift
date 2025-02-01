@@ -18,10 +18,10 @@ struct OrderView: View {
     @State private var phone = ""
     @State private var email = ""
     @State private var address = ""
-    @State private var chocolateChipQuantity = 0
-    @State private var sprinkleQuantity = 0
-    @State private var smoreQuantity = 0
-    @State private var oreoQuantity = 0
+    @State private var chocolateChipQuantity = 0.0
+    @State private var sprinkleQuantity = 0.0
+    @State private var smoreQuantity = 0.0
+    @State private var oreoQuantity = 0.0
     @State private var isNewCustomer = true
     @State private var showSuccessMessage = false
     @State private var showValidationError = false
@@ -215,7 +215,7 @@ struct OrderView: View {
         }
     }
     
-    private func addOrder(to customer: CustomerEntity){
+    private func addOrder(to customer: CustomerEntity) {
         let newOrder = OrderEntity(context: viewContext)
         newOrder.customer = customer
         newOrder.promisedDate = promisedDate
@@ -225,16 +225,16 @@ struct OrderView: View {
     private func addCookies(to order: OrderEntity) {
         let cookies = [
             (OrderConstants.chocolateChip, chocolateChipQuantity),
-            ("Sprinkle", sprinkleQuantity),
-            ("S'more", smoreQuantity),
-            ("Oreo", oreoQuantity)
+            (OrderConstants.sprinkle, sprinkleQuantity),
+            (OrderConstants.smore, smoreQuantity),
+            (OrderConstants.oreo, oreoQuantity)
         ]
         
         for (flavor, quantity) in cookies {
             let newCookie = CookieEntity(context: viewContext)
             newCookie.flavor = flavor
-            newCookie.quantity = Double(quantity)
-            newCookie.totalCost = Double(quantity) * 2.5
+            newCookie.quantity = quantity
+            newCookie.totalCost = quantity * 2.5
         
         }
         
@@ -257,10 +257,10 @@ struct OrderView: View {
         phone = ""
         email = ""
         address = ""
-        chocolateChipQuantity = 0
-        sprinkleQuantity = 0
-        smoreQuantity = 0
-        oreoQuantity = 0
+        chocolateChipQuantity = 0.0
+        sprinkleQuantity = 0.0
+        smoreQuantity = 0.0
+        oreoQuantity = 0.0
         promisedDate = Date()
         isNewCustomer = true
         isDelivery = false
@@ -270,7 +270,7 @@ struct OrderView: View {
 
 struct FlavorInputRow: View {
     let flavor: String
-    @Binding var quantity: Int
+    @Binding var quantity: Double
 
     var body: some View {
         HStack {
