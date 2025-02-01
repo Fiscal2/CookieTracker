@@ -108,7 +108,7 @@ struct CustomerDetailView: View {
             Divider()
 
             // Orders List
-            Text("Orders")
+            Text("Total Cookies")
                 .font(.headline)
 
             let consolidatedOrders = Dictionary(grouping: ordersArray, by: { $0.flavor ?? "Unknown" })
@@ -180,6 +180,7 @@ struct CustomerDetailView: View {
                 .cornerRadius(8)
                 .padding(.horizontal)
                 .disabled(noteTooLong)
+                .contentShape(Rectangle()) // Ensures full button is tappable
 
                 Spacer()
             }
@@ -232,6 +233,7 @@ struct CustomerDetailView: View {
                 .foregroundColor(.white)
                 .cornerRadius(8)
                 .padding(.horizontal)
+                .contentShape(Rectangle()) // Ensures full button is tappable
 
             }
             .padding()

@@ -157,10 +157,22 @@ struct OrderView: View {
             keyboardOffset = 0
         }
     }
+    
+    private func formatPhoneNumber(_ number: String) -> String {
+        let digits = number.filter { $0.isNumber } // Extract only digits
+        guard digits.count == 10 else { return number } // Ensure it's a 10-digit number
+
+        let areaCode = digits.prefix(3)
+        let middle = digits.dropFirst(3).prefix(3)
+        let last = digits.dropFirst(6)
+
+        return "\(areaCode)-\(middle)-\(last)"
+    }
 
     private func saveOrder() {
         let newTotal = chocolateChipQuantity + sprinkleQuantity + smoreQuantity + oreoQuantity
-        
+
+        // Ensure the order meets the 6-cookie minimum
         guard newTotal >= 6 else {
             showValidationError = true
             return
@@ -175,7 +187,16 @@ struct OrderView: View {
             if let existingCustomer = existingCustomers.first {
                 addOrders(to: existingCustomer)
             } else {
-                createNewCustomer()
+                let newCustomer = CustomerEntity(context: viewContext)
+                newCustomer.id = UUID()
+                newCustomer.name = name
+                newCustomer.phone = formatPhoneNumber(phone) // 🔹 Format phone before saving
+                newCustomer.email = email
+                newCustomer.address = address
+                newCustomer.delivery = isDelivery
+                newCustomer.totalCost = totalCost
+
+                addOrders(to: newCustomer)
             }
 
             try viewContext.save()
@@ -190,6 +211,7 @@ struct OrderView: View {
             print("Error saving order: \(error.localizedDescription)")
         }
     }
+
 
     private func addOrders(to customer: CustomerEntity) {
         let flavors = [
