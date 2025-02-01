@@ -120,7 +120,7 @@ struct CustomerDetailView: View {
 
             ForEach(groupedOrders.sorted(by: { $0.key < $1.key }), id: \.key) { date, orders in
                 let totalCookies = orders.reduce(0) { $0 + Int($1.quantity) }
-                let totalCost = Double(totalCookies) * 2.5
+                let totalCost = Double(totalCookies) * 2.5 + (customer.delivery ? 6.0 : 0.0)
 
                 HStack {
                     Button(action: {
@@ -154,13 +154,6 @@ struct CustomerDetailView: View {
                 ForEach(consolidatedOrders.sorted(by: { $0.key < $1.key }), id: \.key) { flavor, quantity in
                     DetailRow(label: "\(flavor):", value: "\(quantity)")
                 }
-            }
-
-            Divider()
-
-            if customer.delivery {
-                Text("Delivery Fee: $6")
-                    .foregroundColor(.blue)
             }
 
             Divider()
