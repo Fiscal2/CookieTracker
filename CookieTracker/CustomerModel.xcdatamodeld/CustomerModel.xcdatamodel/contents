@@ -21,7 +21,7 @@
         <attribute name="flavor" optional="YES" attributeType="String"/>
         <attribute name="orderID" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="promisedDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-        <relationship name="cookies" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CookieEntity" inverseName="order" inverseEntity="CookieEntity"/>
+        <relationship name="cookies" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="CookieEntity" inverseName="order" inverseEntity="CookieEntity"/>
         <relationship name="customer" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CustomerEntity" inverseName="orders" inverseEntity="CustomerEntity"/>
     </entity>
 </model>

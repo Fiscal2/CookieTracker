@@ -79,19 +79,25 @@ struct OrderView: View {
 
                     Divider().padding(.vertical, 5)
 
-                    VStack(alignment: .leading, spacing: 10) {
+                    let gridColumns: [GridItem] = [
+                        GridItem(.flexible(), alignment: .leading),
+                        GridItem(.flexible(), alignment: .trailing)
+                    ]
+
+                    LazyVGrid(columns: gridColumns, alignment: .leading, spacing: 10) {
+                        // Promised By Label
                         Text("Promised By:")
                             .font(.headline)
-                        
+
+                        // Delivery Toggle
                         Toggle(isOn: $isDelivery) {
                             Text("Delivery")
                         }
                         .toggleStyle(SwitchToggleStyle())
                         
-
-                        DatePicker("Select a Date", selection: $promisedDate, displayedComponents: .date)
+                        // Date Picker
+                        DatePicker("Select a Date", selection: $promisedDate, in: Date()..., displayedComponents: .date) // Prevents past dates
                             .datePickerStyle(.compact)
-
                     }
                     
                     Divider().padding(.vertical, 5)
@@ -235,6 +241,7 @@ struct OrderView: View {
             newCookie.flavor = flavor
             newCookie.quantity = quantity
             newCookie.totalCost = quantity * 2.5
+            newCookie.order = order
         
         }
         
@@ -287,7 +294,7 @@ struct FlavorInputRow: View {
                 }
 
                 // Quantity Display
-                Text("\(quantity)")
+                Text("\(Int(quantity))")
                     .frame(width: 40, alignment: .center)
                     .font(.headline)
 

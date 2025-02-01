@@ -28,13 +28,6 @@ struct CustomerDetailView: View {
     @State private var selectedOrderDate: Date = Date()
     @State private var selectedOrderDelivery: Bool = false
 
-    var totalCost: Double {
-        let ordersArray = (customer.orders as? Set<OrderEntity>) ?? []
-        let totalCookies = ordersArray.reduce(0) { $0 + Int($1.quantity) }
-        let cookieCost = Double(totalCookies) * 2.5
-        return cookieCost
-    }
-
     var lazyColumns: [GridItem] = [
         GridItem(.flexible(), spacing: 16),
         GridItem(.flexible(), spacing: 16)
@@ -67,10 +60,11 @@ struct CustomerDetailView: View {
 
             // Customer Information
             Group {
-                LazyVGrid(columns: lazyColumns, alignment: .leading, spacing: 16) {
+                LazyVGrid(columns: lazyColumns, alignment: .leading, spacing: 18) {
                     DetailRow(label: "Name", value: customer.name ?? "N/A")
                     DetailRow(label: "Phone", value: customer.phone ?? "N/A")
                     DetailRow(label: "Email", value: customer.email ?? "N/A").frame(minWidth: 200, maxWidth: .infinity, alignment: .leading)
+
                 }
 
                 if let address = customer.address, !address.isEmpty {
@@ -114,27 +108,26 @@ struct CustomerDetailView: View {
             Text("Orders Summary")
                 .font(.headline)
 
-            let ordersArray = (customer.orders as? Set<OrderEntity>) ?? []
-            ForEach(ordersArray.sorted(by: ))
-
-            ForEach(groupedOrders.sorted(by: { $0.key < $1.key }), id: \.key) { date, orders in
-                let totalCookies = orders.reduce(0) { $0 + Int($1.quantity) }
-                let totalCost = Double(totalCookies) * 2.5
-
+            let ordersArray = Array(customer.orders as? Set<OrderEntity> ?? [])
+            ForEach(ordersArray, id: \.self){order in
+                let cookiesArray = (order.cookies as? Set<CookieEntity> ?? [])
+                let totalCookies = cookiesArray.reduce(0) { $0 + $1.quantity }
+                let totalCost = totalCookies * 2.5
+                let orderPromisedDate = order.promisedDate ?? Date()
                 HStack {
                     Button(action: {
-                        selectedOrderDetails = orders.map { ($0.flavor ?? "Unknown", Int($0.quantity)) }
-                        selectedOrderDate = date
+                        selectedOrderDetails = cookiesArray.map { ($0.flavor ?? "Unknown", Int($0.quantity)) }
+                        selectedOrderDate = orderPromisedDate
                         showOrderPopup = true
                     }) {
-                        Text("\(totalCookies) cookies")
+                        Text("\(Int(totalCookies)) cookies")
                             .foregroundColor(.blue)
                     }
                     Spacer()
                     Text("$\(String(format: "%.2f", totalCost))")
                         .fontWeight(.bold)
                         .foregroundColor(.blue)
-                    Text("for \(formattedDate(date))")
+                    Text("for \(formattedDate(orderPromisedDate))")
                         .foregroundColor(.gray)
                 }
             }
@@ -145,14 +138,35 @@ struct CustomerDetailView: View {
             Text("Total Cookies")
                 .font(.headline)
 
-            let consolidatedOrders = Dictionary(grouping: ordersArray, by: { $0.flavor ?? "Unknown" })
-                .mapValues { $0.reduce(0) { $0 + Int($1.quantity) } }
+            // Group Orders by Flavor
+            // Flatten all cookies from all orders
+            var consolidatedOrders: [String: Int] {
+                let allCookies = ordersArray.flatMap { order in
+                    (order.cookies as? Set<CookieEntity>) ?? []
+                }
+
+                let groupedCookies = Dictionary(grouping: allCookies) { cookie in
+                    cookie.flavor ?? "Unknown"
+                }
+
+                var totals = [String: Int]()
+                for (flavor, cookies) in groupedCookies {
+                    totals[flavor, default: 0] += cookies.reduce(0) { $0 + Int($1.quantity) }
+                }
+                return totals
+            }
+            
+            // **Calculate Total Cost (Includes Delivery Fee)**
+            let totalCost = consolidatedOrders.values.reduce(0.0) { sum, quantity in
+                sum + (Double(quantity) * 2.5) // Price per cookie = $2.5
+            } + (ordersArray.contains { $0.delivery } ? 6.0 : 0.0) 
 
             LazyVGrid(columns: lazyColumns, alignment: .leading, spacing: 16) {
                 ForEach(consolidatedOrders.sorted(by: { $0.key < $1.key }), id: \.key) { flavor, quantity in
                     DetailRow(label: "\(flavor):", value: "\(quantity)")
                 }
             }
+
 
             Divider()
 
