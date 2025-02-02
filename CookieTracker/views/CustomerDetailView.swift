@@ -64,7 +64,6 @@ struct CustomerDetailView: View {
                     DetailRow(label: "Name", value: customer.name ?? "N/A")
                     DetailRow(label: "Phone", value: customer.phone ?? "N/A")
                     DetailRow(label: "Email", value: customer.email ?? "N/A").frame(minWidth: 200, maxWidth: .infinity, alignment: .leading)
-
                 }
 
                 if let address = customer.address, !address.isEmpty {
@@ -139,7 +138,7 @@ struct CustomerDetailView: View {
                 .font(.headline)
             
             // Calculate Total Cost (Includes Delivery Fee)
-            let totalCost = ordersArray.TotalOrdersCost() + (ordersArray.contains { $0.delivery } ? 6.0 : 0.0)
+            let totalCost = ordersArray.TotalOrdersCost()
             
             let allOrderCookies = ordersArray.flatMap { order in
                 (order.cookies as? Set<CookieEntity>) ?? []
@@ -147,7 +146,7 @@ struct CustomerDetailView: View {
 
             LazyVGrid(columns: lazyColumns, alignment: .leading, spacing: 16) {
                 ForEach(allOrderCookies) { cookie in
-                    DetailRow(label: "\(cookie.flavor ?? ""):", value: "\(cookie.quantity)")
+                    DetailRow(label: "\(cookie.flavor ?? ""):", value: "\(Int(cookie.quantity))")
                 }
             }
 
@@ -268,7 +267,7 @@ struct CustomerDetailView: View {
 
                 // List of Flavors & Quantities
                 ForEach(selectedCookieOrderDetails) { cookie in
-                    DetailRow(label: "\(cookie.flavor ?? ""):", value: "\(cookie.quantity)")
+                    DetailRow(label: "\(cookie.flavor ?? ""):", value: "\(Int(cookie.quantity))")
                 }
                 
                 if selectedOrderDelivery {
