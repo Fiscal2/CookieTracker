@@ -24,7 +24,7 @@ struct CustomerDetailView: View {
 
     // State for Order Details Pop-Up
     @State private var showOrderPopup = false
-    @State private var selectedOrderDetails: [(String, Int)] = []
+    @State private var selectedCookieOrderDetails: [CookieEntity] = []
     @State private var selectedOrderDate: Date = Date()
     @State private var selectedOrderDelivery: Bool = false
 
@@ -110,21 +110,21 @@ struct CustomerDetailView: View {
 
             let ordersArray = Array(customer.orders as? Set<OrderEntity> ?? [])
             ForEach(ordersArray, id: \.self){order in
-                let cookiesArray = (order.cookies as? Set<CookieEntity> ?? [])
-                let totalCookies = cookiesArray.reduce(0) { $0 + $1.quantity }
-                let totalCost = totalCookies * 2.5
                 let orderPromisedDate = order.promisedDate ?? Date()
+                let cookiesArray = Array(order.cookies as? Set<CookieEntity> ?? [])
                 HStack {
                     Button(action: {
-                        selectedOrderDetails = cookiesArray.map { ($0.flavor ?? "Unknown", Int($0.quantity)) }
+                        selectedCookieOrderDetails = cookiesArray
                         selectedOrderDate = orderPromisedDate
                         showOrderPopup = true
+                        selectedOrderDelivery = order.delivery
+                        
                     }) {
-                        Text("\(Int(totalCookies)) cookies")
+                        Text("\(order.TotalCookiesInOrder()) cookies")
                             .foregroundColor(.blue)
                     }
                     Spacer()
-                    Text("$\(String(format: "%.2f", totalCost))")
+                    Text("$\(String(format: "%.2f", order.TotalOrderCost()))")
                         .fontWeight(.bold)
                         .foregroundColor(.blue)
                     Text("for \(formattedDate(orderPromisedDate))")
@@ -137,36 +137,19 @@ struct CustomerDetailView: View {
             // Orders List
             Text("Total Cookies")
                 .font(.headline)
-
-            // Group Orders by Flavor
-            // Flatten all cookies from all orders
-            var consolidatedOrders: [String: Int] {
-                let allCookies = ordersArray.flatMap { order in
-                    (order.cookies as? Set<CookieEntity>) ?? []
-                }
-
-                let groupedCookies = Dictionary(grouping: allCookies) { cookie in
-                    cookie.flavor ?? "Unknown"
-                }
-
-                var totals = [String: Int]()
-                for (flavor, cookies) in groupedCookies {
-                    totals[flavor, default: 0] += cookies.reduce(0) { $0 + Int($1.quantity) }
-                }
-                return totals
-            }
             
-            // **Calculate Total Cost (Includes Delivery Fee)**
-            let totalCost = consolidatedOrders.values.reduce(0.0) { sum, quantity in
-                sum + (Double(quantity) * 2.5) // Price per cookie = $2.5
-            } + (ordersArray.contains { $0.delivery } ? 6.0 : 0.0) 
+            // Calculate Total Cost (Includes Delivery Fee)
+            let totalCost = ordersArray.TotalOrdersCost() + (ordersArray.contains { $0.delivery } ? 6.0 : 0.0)
+            
+            let allOrderCookies = ordersArray.flatMap { order in
+                (order.cookies as? Set<CookieEntity>) ?? []
+            }
 
             LazyVGrid(columns: lazyColumns, alignment: .leading, spacing: 16) {
-                ForEach(consolidatedOrders.sorted(by: { $0.key < $1.key }), id: \.key) { flavor, quantity in
-                    DetailRow(label: "\(flavor):", value: "\(quantity)")
+                ForEach(allOrderCookies) { cookie in
+                    DetailRow(label: "\(cookie.flavor ?? ""):", value: "\(cookie.quantity)")
                 }
             }
-
 
             Divider()
 
@@ -284,8 +267,8 @@ struct CustomerDetailView: View {
                 Divider()
 
                 // List of Flavors & Quantities
-                ForEach(selectedOrderDetails, id: \.0) { flavor, quantity in
-                    DetailRow(label: "\(flavor):", value: "\(quantity)")
+                ForEach(selectedCookieOrderDetails) { cookie in
+                    DetailRow(label: "\(cookie.flavor ?? ""):", value: "\(cookie.quantity)")
                 }
                 
                 if selectedOrderDelivery {

@@ -86,18 +86,21 @@ struct OrderView: View {
 
                     LazyVGrid(columns: gridColumns, alignment: .leading, spacing: 10) {
                         // Promised By Label
-                        Text("Promised By:")
+                        Text("Promised By Date:")
                             .font(.headline)
+
 
                         // Delivery Toggle
                         Toggle(isOn: $isDelivery) {
-                            Text("Delivery")
+                            Text("Delivery:")
+                                .font(.headline)
                         }
                         .toggleStyle(SwitchToggleStyle())
                         
                         // Date Picker
-                        DatePicker("Select a Date", selection: $promisedDate, in: Date()..., displayedComponents: .date) // Prevents past dates
+                        DatePicker("", selection: $promisedDate, in: Date()..., displayedComponents: .date) // Prevents past dates
                             .datePickerStyle(.compact)
+                            .labelsHidden()
                     }
                     
                     Divider().padding(.vertical, 5)
@@ -129,7 +132,7 @@ struct OrderView: View {
                         HStack {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundColor(.green)
-                            Text("Customer Created")
+                            Text(isNewCustomer ? "Order & Customer Created" : "Order Created")
                                 .foregroundColor(.green)
                                 .font(.headline)
                         }
@@ -137,7 +140,7 @@ struct OrderView: View {
                     }
 
                     Button(action: saveOrder) {
-                        Text("Add Customer & Order")
+                        Text("Add Order")
                             .frame(maxWidth: .infinity, minHeight: 20)
                             .padding()
                             .background(isValidOrder ? Color.blue : Color.gray)
@@ -225,6 +228,7 @@ struct OrderView: View {
         let newOrder = OrderEntity(context: viewContext)
         newOrder.customer = customer
         newOrder.promisedDate = promisedDate
+        newOrder.delivery = isDelivery
         addCookies (to: newOrder)
     }
 
