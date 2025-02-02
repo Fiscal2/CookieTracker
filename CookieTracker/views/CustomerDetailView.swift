@@ -21,6 +21,15 @@ struct CustomerDetailView: View {
     @State private var showNotePopup = false
     @State private var noteText = ""
     @State private var noteTooLong = false
+    
+    // State for Adding a New Order
+    @State private var showAddOrderPopup = false
+    @State private var chocolateChipQuantity = 0.0
+    @State private var sprinkleQuantity = 0.0
+    @State private var smoreQuantity = 0.0
+    @State private var oreoQuantity = 0.0
+    @State private var promisedDate = Date()
+    @State private var isDelivery = false
 
     // State for Order Details Pop-Up
     @State private var showOrderPopup = false
@@ -99,6 +108,22 @@ struct CustomerDetailView: View {
                     .cornerRadius(10)
                 }
                 .buttonStyle(PlainButtonStyle())
+                
+                Button(action: {
+                    showAddOrderPopup = true
+                }) {
+                    HStack {
+                        Image(systemName: "pencil")
+                            .foregroundColor(.blue)
+                        Text("Add Order")
+                            .foregroundColor(.blue)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(8)
+                    .background(Color.blue.opacity(0.15))
+                    .cornerRadius(10)
+                }
+                .buttonStyle(PlainButtonStyle())
             }
 
             Divider()
@@ -132,7 +157,8 @@ struct CustomerDetailView: View {
             }
 
             Divider()
-
+            
+            
             // Orders List
             Text("Total Cookies")
                 .font(.headline)
@@ -340,3 +366,4 @@ struct DetailRow: View {
         .padding(.vertical, 4)
     }
 }
+

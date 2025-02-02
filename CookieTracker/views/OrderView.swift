@@ -191,26 +191,14 @@ struct OrderView: View {
             return
         }
 
-        let fetchRequest: NSFetchRequest<CustomerEntity> = CustomerEntity.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "name == %@ AND phone == %@", name, phone)
+        // Check if customer already exists
+        if let existingCustomer = CustomerEntity.isExistingCustomer(name: name, phone: phone, context: viewContext) {
+            addOrder(to: existingCustomer)
+        } else {
+            createNewCustomer()
+        }
 
         do {
-            let existingCustomers = try viewContext.fetch(fetchRequest)
-
-            if let existingCustomer = existingCustomers.first {
-                addOrder(to: existingCustomer)
-            } else {
-                let newCustomer = CustomerEntity(context: viewContext)
-                newCustomer.id = UUID()
-                newCustomer.name = name
-                newCustomer.phone = formatPhoneNumber(phone) // Format phone before saving
-                newCustomer.email = email
-                newCustomer.address = address
-                newCustomer.totalCost = totalCost
-
-                addOrder(to: newCustomer)
-            }
-
             try viewContext.save()
             showSuccessMessage = true
             showValidationError = false
