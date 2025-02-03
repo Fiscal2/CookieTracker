@@ -21,11 +21,11 @@ struct CustomerDetailView: View {
     // State for Adding a New Order
     @State private var showAddOrderPopup = false
     @State private var cookieSelections: [String: Double] = [
-            OrderConstants.chocolateChip: 0,
-            OrderConstants.sprinkle: 0,
-            OrderConstants.smore: 0,
-            OrderConstants.oreo: 0
-        ]
+        OrderConstants.chocolateChip: 0,
+        OrderConstants.sprinkle: 0,
+        OrderConstants.smore: 0,
+        OrderConstants.oreo: 0
+    ]
     @State private var promisedDate = Date()
     @State private var isDelivery = false
 
@@ -177,36 +177,35 @@ struct CustomerDetailView: View {
             Text("Total Cookies")
                 .font(.headline)
             
-            // Calculate Total Cost (Includes Delivery Fee)
-            let totalCost = ordersArray.TotalOrdersCost()
+            let totalCostOfAllOrders = ordersArray.TotalOrdersCost()
             
-            let allOrderCookies = ordersArray.flatMap { order in
+            let cookiesFromAllOrders = ordersArray.flatMap { order in
                 (order.cookies as? Set<CookieEntity>) ?? []
             }
             
-            let groupedCookies = Dictionary(grouping: allOrderCookies, by: { $0.flavor ?? "Unknown" })
+            let groupedCookies = Dictionary(grouping: cookiesFromAllOrders, by: { $0.flavor ?? "Unknown" })
                 .mapValues { cookies in
-                    cookies.reduce(0) { total, cookie in total + Int(cookie.quantity) }
+                    cookies.reduce(0) { total, cookie in
+                        total + Int(cookie.quantity)
+                    }
                 }
-            
-            let consolidatedCookies = groupedCookies.map { (flavor, quantity) in
-                (flavor: flavor, quantity: quantity)
-            }
 
             LazyVGrid(columns: lazyColumns, alignment: .leading, spacing: 16) {
-                ForEach(consolidatedCookies, id: \.flavor) { cookie in
-                    DetailRow(label: "\(cookie.flavor):", value: "\(cookie.quantity)")
+                ForEach(groupedCookies.keys.sorted(), id: \.self) { flavor in
+                    if let quantity = groupedCookies[flavor] {
+                        DetailRow(label: "\(flavor):", value: "\(quantity)")
+                    }
                 }
             }
 
             Divider()
 
-            // Total Cost
+            // Total Cost of All Orders for Customer
             HStack {
                 Text("Total Cost:")
                     .font(.headline)
                 Spacer()
-                Text("$\(String(format: "%.2f", totalCost))")
+                Text("$\(String(format: "%.2f", totalCostOfAllOrders))")
                     .font(.headline)
                     .foregroundColor(.blue)
             }
