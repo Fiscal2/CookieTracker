@@ -28,18 +28,27 @@ struct OrderView: View {
     @State private var promisedDate = Date()
     @State private var keyboardOffset: CGFloat = 0
     @State private var isDelivery = false
-
+    
+    private var currentTotalQuantity: Double {
+        chocolateChipQuantity + sprinkleQuantity + smoreQuantity + oreoQuantity
+    }
+    private var cookieSelections: [(flavor: String, quantity: Double)] {
+        return [
+            (OrderConstants.chocolateChip, chocolateChipQuantity),
+            (OrderConstants.sprinkle, sprinkleQuantity),
+            (OrderConstants.smore, smoreQuantity),
+            (OrderConstants.oreo, oreoQuantity)
+        ]
+    }
 
     var totalCost: Double {
-        let totalCookies = chocolateChipQuantity + sprinkleQuantity + smoreQuantity + oreoQuantity
-        let cookieCost = Double(totalCookies) * 2.5
+        let cookieCost = Double(currentTotalQuantity) * 2.5
         let deliveryFee = isDelivery ? 6.0 : 0.0
         return cookieCost + deliveryFee
     }
 
     private var isValidOrder: Bool {
-        let newTotal = chocolateChipQuantity + sprinkleQuantity + smoreQuantity + oreoQuantity
-        return newTotal >= 6
+        return currentTotalQuantity >= 6
     }
 
     var body: some View {
@@ -237,14 +246,8 @@ struct OrderView: View {
     }
 
     private func addCookies(to order: OrderEntity) {
-        let cookies = [
-            (OrderConstants.chocolateChip, chocolateChipQuantity),
-            (OrderConstants.sprinkle, sprinkleQuantity),
-            (OrderConstants.smore, smoreQuantity),
-            (OrderConstants.oreo, oreoQuantity)
-        ]
         
-        for (flavor, quantity) in cookies {
+        for (flavor, quantity) in cookieSelections {
             let newCookie = CookieEntity(context: viewContext)
             newCookie.flavor = flavor
             newCookie.quantity = quantity

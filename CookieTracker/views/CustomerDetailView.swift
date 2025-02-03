@@ -223,18 +223,19 @@ struct CustomerDetailView: View {
                 TextField("Address", text: $editedAddress)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding()
-
-                Button("Save") {
+                
+                Button(action: {
                     saveCustomerChanges()
                     showEditCustomerPopup = false
+                }) {
+                   Text("Save")
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                        .padding(.horizontal)
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(8)
-                .padding(.horizontal)
-
                 Spacer()
             }
             .padding()
@@ -279,18 +280,19 @@ struct CustomerDetailView: View {
                         .font(.headline)
                         .foregroundColor(.blue)
                 }
-                
-                // Save Button
-                Button("Save Order") {
+                Button(action: {
                     saveNewOrder()
                     showAddOrderPopup = false
+                }) {
+                   Text("Save")
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                        .padding(.horizontal)
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(8)
-                .padding(.horizontal)
+                
             }
             .padding()
             .presentationDetents([.medium])
@@ -314,18 +316,19 @@ struct CustomerDetailView: View {
                         .font(.footnote)
                         .padding(.bottom, 5)
                 }
-
-                Button("Save") {
+                
+                Button(action: {
                     saveNote()
                     showNotePopup = false
+                }) {
+                   Text("Save")
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                        .padding(.horizontal)
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(8)
-                .padding(.horizontal)
-
                 Spacer()
             }
             .padding()
@@ -367,17 +370,17 @@ struct CustomerDetailView: View {
                 Spacer()
 
                 // Close Button
-                Button("Close") {
+                Button(action: {
                     showOrderPopup = false
+                }) {
+                    Text("Close")
+                        .frame(maxWidth: .infinity, minHeight: 21)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(8)
                 .padding(.horizontal)
-                .contentShape(Rectangle()) // Ensures full button is tappable
-
             }
             .padding()
             .presentationDetents([.medium]) // Half-screen pop-up
