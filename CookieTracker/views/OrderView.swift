@@ -19,23 +19,23 @@ struct OrderView: View {
     @State private var email = ""
     @State private var address = ""
     @State private var cookieSelections: [String: Double] = [
-        OrderConstants.chocolateChip: 0,
-        OrderConstants.sprinkle: 0,
-        OrderConstants.smore: 0,
-        OrderConstants.oreo: 0
-    ]
+            OrderConstants.chocolateChip: 0,
+            OrderConstants.sprinkle: 0,
+            OrderConstants.smore: 0,
+            OrderConstants.oreo: 0
+        ]
     @State private var isNewCustomer = true
     @State private var showSuccessMessage = false
     @State private var showValidationError = false
     @State private var promisedDate = Date()
     @State private var keyboardOffset: CGFloat = 0
     @State private var isDelivery = false
-
+    
     private var currentTotalQuantity: Double {
         cookieSelections.values.reduce(0, +)
     }
 
-    var currentTotalCost: Double {
+    private var currentTotalCost: Double {
         let deliveryFee = isDelivery ? 6.0 : 0.0
         return (currentTotalQuantity * 2.5) + deliveryFee
     }
@@ -84,7 +84,7 @@ struct OrderView: View {
                         VStack(spacing: 6) {
                             Text("Flavors (Min of 6):")
                                 .font(.headline)
-                            
+
                             ForEach(cookieSelections.keys.sorted(), id: \.self) { flavor in
                                 FlavorInputRow(flavor: flavor, quantity: Binding(
                                     get: { cookieSelections[flavor, default: 0] },
@@ -203,6 +203,7 @@ struct OrderView: View {
     }
 
     private func saveOrder() {
+        // Ensure the order meets the 6-cookie minimum
         guard isValidOrder else {
             showValidationError = true
             return
