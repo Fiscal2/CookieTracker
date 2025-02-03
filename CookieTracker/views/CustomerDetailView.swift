@@ -178,10 +178,19 @@ struct CustomerDetailView: View {
             let allOrderCookies = ordersArray.flatMap { order in
                 (order.cookies as? Set<CookieEntity>) ?? []
             }
+            
+            let groupedCookies = Dictionary(grouping: allOrderCookies, by: { $0.flavor ?? "Unknown" })
+                .mapValues { cookies in
+                    cookies.reduce(0) { total, cookie in total + Int(cookie.quantity) }
+                }
+            
+            let consolidatedCookies = groupedCookies.map { (flavor, quantity) in
+                (flavor: flavor, quantity: quantity)
+            }
 
             LazyVGrid(columns: lazyColumns, alignment: .leading, spacing: 16) {
-                ForEach(allOrderCookies) { cookie in
-                    DetailRow(label: "\(cookie.flavor ?? ""):", value: "\(Int(cookie.quantity))")
+                ForEach(consolidatedCookies, id: \.flavor) { cookie in
+                    DetailRow(label: "\(cookie.flavor):", value: "\(cookie.quantity)")
                 }
             }
 

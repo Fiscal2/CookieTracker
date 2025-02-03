@@ -18,10 +18,12 @@ struct OrderView: View {
     @State private var phone = ""
     @State private var email = ""
     @State private var address = ""
-    @State private var chocolateChipQuantity = 0.0
-    @State private var sprinkleQuantity = 0.0
-    @State private var smoreQuantity = 0.0
-    @State private var oreoQuantity = 0.0
+    @State private var cookieSelections: [String: Double] = [
+            OrderConstants.chocolateChip: 0,
+            OrderConstants.sprinkle: 0,
+            OrderConstants.smore: 0,
+            OrderConstants.oreo: 0
+        ]
     @State private var isNewCustomer = true
     @State private var showSuccessMessage = false
     @State private var showValidationError = false
@@ -30,21 +32,12 @@ struct OrderView: View {
     @State private var isDelivery = false
     
     private var currentTotalQuantity: Double {
-        chocolateChipQuantity + sprinkleQuantity + smoreQuantity + oreoQuantity
-    }
-    private var cookieSelections: [(flavor: String, quantity: Double)] {
-        return [
-            (OrderConstants.chocolateChip, chocolateChipQuantity),
-            (OrderConstants.sprinkle, sprinkleQuantity),
-            (OrderConstants.smore, smoreQuantity),
-            (OrderConstants.oreo, oreoQuantity)
-        ]
+        cookieSelections.values.reduce(0, +)
     }
 
-    var totalCost: Double {
-        let cookieCost = Double(currentTotalQuantity) * 2.5
+    private var currentTotalCost: Double {
         let deliveryFee = isDelivery ? 6.0 : 0.0
-        return cookieCost + deliveryFee
+        return (currentTotalQuantity * 2.5) + deliveryFee
     }
 
     private var isValidOrder: Bool {
@@ -91,10 +84,12 @@ struct OrderView: View {
                         VStack(spacing: 6) {
                             Text("Flavors (Min of 6):")
                                 .font(.headline)
-                            FlavorInputRow(flavor: OrderConstants.chocolateChip, quantity: $chocolateChipQuantity)
-                            FlavorInputRow(flavor: OrderConstants.sprinkle, quantity: $sprinkleQuantity)
-                            FlavorInputRow(flavor: OrderConstants.smore, quantity: $smoreQuantity)
-                            FlavorInputRow(flavor: OrderConstants.oreo, quantity: $oreoQuantity)
+                            ForEach(cookieSelections.keys.sorted(), id: \.self) { flavor in
+                                FlavorInputRow(flavor: flavor, quantity: Binding(
+                                    get: { cookieSelections[flavor, default: 0] },
+                                    set: { cookieSelections[flavor] = $0 }
+                                ))
+                            }
                         }
                         .padding()
                         .background(Color(.systemGray6))
@@ -134,7 +129,7 @@ struct OrderView: View {
                         Text("Total Cost:")
                             .font(.headline)
                         Spacer()
-                        Text("$\(String(format: "%.2f", totalCost))")
+                        Text("$\(String(format: "%.2f", currentTotalCost))")
                             .font(.headline)
                             .foregroundColor(.blue)
                     }
@@ -208,10 +203,9 @@ struct OrderView: View {
     }
 
     private func saveOrder() {
-        let newTotal = chocolateChipQuantity + sprinkleQuantity + smoreQuantity + oreoQuantity
 
         // Ensure the order meets the 6-cookie minimum
-        guard newTotal >= 6 else {
+        guard isValidOrder else {
             showValidationError = true
             return
         }
@@ -263,7 +257,7 @@ struct OrderView: View {
         newCustomer.phone = phone
         newCustomer.email = email
         newCustomer.address = address
-        newCustomer.totalCost = totalCost
+        newCustomer.totalCost = currentTotalCost
 
         addOrder(to: newCustomer)
     }
@@ -273,10 +267,7 @@ struct OrderView: View {
         phone = ""
         email = ""
         address = ""
-        chocolateChipQuantity = 0.0
-        sprinkleQuantity = 0.0
-        smoreQuantity = 0.0
-        oreoQuantity = 0.0
+        cookieSelections = cookieSelections.mapValues { _ in 0 }
         promisedDate = Date()
         isNewCustomer = true
         isDelivery = false
