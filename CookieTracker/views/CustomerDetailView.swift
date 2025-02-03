@@ -74,6 +74,7 @@ struct CustomerDetailView: View {
                     DetailRow(label: "Phone", value: customer.phone ?? "N/A")
                     DetailRow(label: "Email", value: customer.email ?? "N/A")
                         .frame(minWidth: 350, maxWidth: .infinity, alignment: .leading)
+                        .lineLimit(1)
                     
                 }
 
@@ -247,6 +248,7 @@ struct CustomerDetailView: View {
                     .font(.headline)
                     .padding(.top)
                 
+                
                 // Flavor Inputs
                 FlavorInputRow(flavor: OrderConstants.chocolateChip, quantity: $chocolateChipQuantity)
                 FlavorInputRow(flavor: OrderConstants.sprinkle, quantity: $sprinkleQuantity)
@@ -257,8 +259,9 @@ struct CustomerDetailView: View {
                 
                 // Delivery & Promised Date
                 LazyVGrid(columns: lazyColumns, alignment: .leading, spacing: 16) {
-                    DatePicker("Select a Date", selection: $promisedDate, displayedComponents: .date)
+                    DatePicker("", selection: $promisedDate, displayedComponents: .date)
                         .datePickerStyle(.compact)
+                        .labelsHidden()
                     
                     Toggle(isOn: $isDelivery) {
                         Text("Delivery")
@@ -268,9 +271,18 @@ struct CustomerDetailView: View {
                 
                 Divider()
                 
+                HStack {
+                    Text("Total Cost:")
+                        .font(.headline)
+                    Spacer()
+                    Text("$\(String(format: "%.2f", "0"))")
+                        .font(.headline)
+                        .foregroundColor(.blue)
+                }
+                
                 // Save Button
                 Button("Save Order") {
-                    //saveNewOrder()
+                    saveNewOrder()
                     showAddOrderPopup = false
                 }
                 .padding()
@@ -371,6 +383,33 @@ struct CustomerDetailView: View {
             .presentationDetents([.medium]) // Half-screen pop-up
         }
     }
+    
+    // Save New Order Function
+    private func saveNewOrder() {
+            let newTotal = chocolateChipQuantity + sprinkleQuantity + smoreQuantity + oreoQuantity
+            guard newTotal >= 6 else { return }
+
+            let newOrder = OrderEntity(context: viewContext)
+            newOrder.promisedDate = promisedDate
+            newOrder.delivery = isDelivery
+            newOrder.customer = customer
+
+            let flavors = [
+                (OrderConstants.chocolateChip, chocolateChipQuantity),
+                (OrderConstants.sprinkle, sprinkleQuantity),
+                (OrderConstants.smore, smoreQuantity),
+                (OrderConstants.oreo, oreoQuantity)
+            ]
+
+            for (flavor, quantity) in flavors where quantity > 0 {
+                let newCookie = CookieEntity(context: viewContext)
+                newCookie.flavor = flavor
+                newCookie.quantity = Double(quantity)
+                newCookie.order = newOrder
+            }
+
+            try? viewContext.save()
+        }
     
     private func deleteOrder(at offsets: IndexSet) {
             let ordersArray = Array(customer.orders as? Set<OrderEntity> ?? [])
