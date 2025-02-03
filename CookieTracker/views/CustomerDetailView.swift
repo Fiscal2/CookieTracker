@@ -128,33 +128,39 @@ struct CustomerDetailView: View {
 
             Divider()
 
-            // Orders Summary
+            // Orders Summary with Swipe-to-Delete
             Text("Orders Summary")
                 .font(.headline)
 
             let ordersArray = Array(customer.orders as? Set<OrderEntity> ?? [])
-            ForEach(ordersArray, id: \.self){order in
-                let orderPromisedDate = order.promisedDate ?? Date()
-                let cookiesArray = Array(order.cookies as? Set<CookieEntity> ?? [])
-                HStack {
-                    Button(action: {
-                        selectedCookieOrderDetails = cookiesArray
-                        selectedOrderDate = orderPromisedDate
-                        showOrderPopup = true
-                        selectedOrderDelivery = order.delivery
-                        
-                    }) {
-                        Text("\(order.TotalCookiesInOrder()) cookies")
+
+            List {
+                ForEach(ordersArray, id: \.self) { order in
+                    let orderPromisedDate = order.promisedDate ?? Date()
+                    let cookiesArray = Array(order.cookies as? Set<CookieEntity> ?? [])
+
+                    HStack {
+                        Button(action: {
+                            selectedCookieOrderDetails = cookiesArray
+                            selectedOrderDate = orderPromisedDate
+                            showOrderPopup = true
+                            selectedOrderDelivery = order.delivery
+                        }) {
+                            Text("\(order.TotalCookiesInOrder()) cookies")
+                                .foregroundColor(.blue)
+                        }
+                        Spacer()
+                        Text("$\(String(format: "%.2f", order.TotalOrderCost()))")
+                            .fontWeight(.bold)
                             .foregroundColor(.blue)
+                        Text("for \(formattedDate(orderPromisedDate))")
+                            .foregroundColor(.gray)
                     }
-                    Spacer()
-                    Text("$\(String(format: "%.2f", order.TotalOrderCost()))")
-                        .fontWeight(.bold)
-                        .foregroundColor(.blue)
-                    Text("for \(formattedDate(orderPromisedDate))")
-                        .foregroundColor(.gray)
                 }
+                .onDelete(perform: deleteOrder) // Swipe-to-Delete
             }
+            .frame(minHeight: 50, maxHeight: .infinity)
+            .listStyle(PlainListStyle())
 
             Divider()
             
@@ -319,6 +325,15 @@ struct CustomerDetailView: View {
             .presentationDetents([.medium]) // Half-screen pop-up
         }
     }
+    
+    private func deleteOrder(at offsets: IndexSet) {
+            let ordersArray = Array(customer.orders as? Set<OrderEntity> ?? [])
+            for index in offsets {
+                let orderToDelete = ordersArray[index]
+                viewContext.delete(orderToDelete)
+            }
+            try? viewContext.save()
+        }
     
     private func checkWordLimit() {
             let words = noteText.split(separator: " ").count
