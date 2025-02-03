@@ -24,10 +24,12 @@ struct CustomerDetailView: View {
     
     // State for Adding a New Order
     @State private var showAddOrderPopup = false
-    @State private var chocolateChipQuantity = 0.0
-    @State private var sprinkleQuantity = 0.0
-    @State private var smoreQuantity = 0.0
-    @State private var oreoQuantity = 0.0
+    @State private var cookieSelections: [String: Double] = [
+            OrderConstants.chocolateChip: 0,
+            OrderConstants.sprinkle: 0,
+            OrderConstants.smore: 0,
+            OrderConstants.oreo: 0
+        ]
     @State private var promisedDate = Date()
     @State private var isDelivery = false
 
@@ -41,6 +43,13 @@ struct CustomerDetailView: View {
         GridItem(.flexible(), spacing: 16),
         GridItem(.flexible(), spacing: 16)
     ]
+    private var newOrderTotalQuantity: Double {
+        cookieSelections.values.reduce(0, +)
+    }
+    
+    private var isValidNewOrder: Bool {
+        return newOrderTotalQuantity >= 6
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -260,10 +269,12 @@ struct CustomerDetailView: View {
                 
                 
                 // Flavor Inputs
-                FlavorInputRow(flavor: OrderConstants.chocolateChip, quantity: $chocolateChipQuantity)
-                FlavorInputRow(flavor: OrderConstants.sprinkle, quantity: $sprinkleQuantity)
-                FlavorInputRow(flavor: OrderConstants.smore, quantity: $smoreQuantity)
-                FlavorInputRow(flavor: OrderConstants.oreo, quantity: $oreoQuantity)
+                ForEach(cookieSelections.keys.sorted(), id: \.self) { flavor in
+                    FlavorInputRow(flavor: flavor, quantity: Binding(
+                        get: { cookieSelections[flavor, default: 0] },
+                        set: { cookieSelections[flavor] = $0 }
+                    ))
+                }
                 
                 Divider()
                 
@@ -398,30 +409,22 @@ struct CustomerDetailView: View {
     
     // Save New Order Function
     private func saveNewOrder() {
-            let newTotal = chocolateChipQuantity + sprinkleQuantity + smoreQuantity + oreoQuantity
-            guard newTotal >= 6 else { return }
-
-            let newOrder = OrderEntity(context: viewContext)
-            newOrder.promisedDate = promisedDate
-            newOrder.delivery = isDelivery
-            newOrder.customer = customer
-
-            let flavors = [
-                (OrderConstants.chocolateChip, chocolateChipQuantity),
-                (OrderConstants.sprinkle, sprinkleQuantity),
-                (OrderConstants.smore, smoreQuantity),
-                (OrderConstants.oreo, oreoQuantity)
-            ]
-
-            for (flavor, quantity) in flavors where quantity > 0 {
-                let newCookie = CookieEntity(context: viewContext)
-                newCookie.flavor = flavor
-                newCookie.quantity = Double(quantity)
-                newCookie.order = newOrder
-            }
-
-            try? viewContext.save()
+        guard isValidNewOrder else { return }
+        let newOrder = OrderEntity(context: viewContext)
+        newOrder.promisedDate = promisedDate
+        newOrder.delivery = isDelivery
+        newOrder.customer = customer
+                
+        for (flavor, quantity) in cookieSelections where quantity > 0 {
+            let newCookie = CookieEntity(context: viewContext)
+            newCookie.flavor = flavor
+            newCookie.quantity = Double(quantity)
+            newCookie.order = newOrder
+            
         }
+
+        try? viewContext.save()
+    }
     
     private func deleteOrder(at offsets: IndexSet) {
             let ordersArray = Array(customer.orders as? Set<OrderEntity> ?? [])
