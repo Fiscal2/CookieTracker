@@ -353,19 +353,17 @@ struct CustomerDetailView: View {
                 }
 
                 Spacer()
-
-                // Close Button
-                Button("Close") {
+                Button(action: {
                     showOrderPopup = false
+                }) {
+                    Text("Close")
+                        .frame(maxWidth: .infinity, minHeight: 21)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(8)
                 .padding(.horizontal)
-                .contentShape(Rectangle()) // Ensures full button is tappable
-
             }
             .padding()
             .presentationDetents([.medium]) // Half-screen pop-up
