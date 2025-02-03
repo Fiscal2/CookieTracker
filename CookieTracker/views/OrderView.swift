@@ -48,36 +48,52 @@ struct OrderView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Order").font(.largeTitle).bold()
 
-                    VStack(alignment: .leading, spacing: 16) {
-                        TextField("Name", text: $name)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                    VStack(spacing: 12) {
+                        HStack(spacing: 12) {
+                            FormTextField(placeholder: "Name", text: $name)
+                            FormTextField(placeholder: "Phone", text: $phone)
+                                .keyboardType(.phonePad)
+                        }
 
-                        TextField("Phone", text: $phone)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .keyboardType(.phonePad)
-
-                        TextField("Email", text: $email)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                        FormTextField(placeholder: "Email", text: $email)
                             .keyboardType(.emailAddress)
 
-                        TextField("Address", text: $address)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                        VStack(alignment: .leading) {
+                           Text("Address")
+                               .font(.subheadline)
+                               .foregroundColor(.gray)
+                           TextEditor(text: $address)
+                               .frame(height: 60)
+                               .padding(8)
+                               .background(Color.white)
+                               .cornerRadius(8)
+                               .overlay(
+                                   RoundedRectangle(cornerRadius: 8)
+                                       .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+                               )
+                       }
                     }
-
-                    .padding(.vertical, 5)
-
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Choose Flavors (Minimum of 6 Total):")
-                            .font(.headline)
-
-                        FlavorInputRow(flavor: OrderConstants.chocolateChip, quantity: $chocolateChipQuantity)
-                        FlavorInputRow(flavor: OrderConstants.sprinkle, quantity: $sprinkleQuantity)
-                        FlavorInputRow(flavor: OrderConstants.smore, quantity: $smoreQuantity)
-                        FlavorInputRow(flavor: OrderConstants.oreo, quantity: $oreoQuantity)
-                    }
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .cornerRadius(12)
+                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                     
+                    VStack(alignment: .leading, spacing: 8) {
+                        VStack(spacing: 6) {
+                            Text("Flavors (Min of 6):")
+                                .font(.headline)
+                            FlavorInputRow(flavor: OrderConstants.chocolateChip, quantity: $chocolateChipQuantity)
+                            FlavorInputRow(flavor: OrderConstants.sprinkle, quantity: $sprinkleQuantity)
+                            FlavorInputRow(flavor: OrderConstants.smore, quantity: $smoreQuantity)
+                            FlavorInputRow(flavor: OrderConstants.oreo, quantity: $oreoQuantity)
+                        }
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .cornerRadius(12)
+                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                    }
 
-                    Divider().padding(.vertical, 5)
+                    Divider().padding(.vertical, 4)
 
                     let gridColumns: [GridItem] = [
                         GridItem(.flexible(), alignment: .leading),
@@ -234,9 +250,7 @@ struct OrderView: View {
             newCookie.quantity = quantity
             newCookie.totalCost = quantity * 2.5
             newCookie.order = order
-        
         }
-        
     }
 
     private func createNewCustomer() {
@@ -266,6 +280,21 @@ struct OrderView: View {
     }
 }
 
+struct FormTextField: View {
+    var placeholder: String
+    @Binding var text: String
+
+    var body: some View {
+        TextField(placeholder, text: $text)
+            .padding(12)
+            .background(Color.white)
+            .cornerRadius(8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+            )
+    }
+}
 
 struct FlavorInputRow: View {
     let flavor: String
@@ -275,30 +304,45 @@ struct FlavorInputRow: View {
         HStack {
             Text(flavor)
                 .font(.headline)
+
             Spacer()
-            HStack(spacing: 10) {
+
+            HStack(spacing: 6) {
                 // Decrement Button
                 Button(action: {
-                    if quantity > 0 { quantity -= 1 } // Decrease by 1
+                    if quantity > 0 {
+                        withAnimation(.easeInOut(duration: 0.1)) {
+                            quantity -= 1
+                        }
+                    }
                 }) {
-                    Image(systemName: "minus.circle")
-                        .foregroundColor(quantity > 0 ? .blue : .gray) // Disable if at 0
+                    Image(systemName: "minus.circle.fill")
+                        .resizable()
+                        .frame(width: 24, height: 24)
+                        .foregroundColor(quantity > 0 ? .blue : .gray)
                 }
+                .disabled(quantity == 0)
 
-                // Quantity Display
                 Text("\(Int(quantity))")
-                    .frame(width: 40, alignment: .center)
+                    .frame(width: 32)
                     .font(.headline)
+                    .multilineTextAlignment(.center)
 
                 // Increment Button
                 Button(action: {
-                    quantity += 1 // Increase by 1
+                    withAnimation(.easeInOut(duration: 0.10)) {
+                        quantity += 1
+                    }
                 }) {
-                    Image(systemName: "plus.circle")
+                    Image(systemName: "plus.circle.fill")
+                        .resizable()
+                        .frame(width: 24, height: 24)
                         .foregroundColor(.blue)
                 }
             }
+            .padding(.horizontal, 4)
         }
+        .padding(.vertical, 4)
     }
 }
 
