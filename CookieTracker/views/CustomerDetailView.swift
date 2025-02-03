@@ -72,7 +72,9 @@ struct CustomerDetailView: View {
                 LazyVGrid(columns: lazyColumns, alignment: .leading, spacing: 18) {
                     DetailRow(label: "Name", value: customer.name ?? "N/A")
                     DetailRow(label: "Phone", value: customer.phone ?? "N/A")
-                    DetailRow(label: "Email", value: customer.email ?? "N/A").frame(minWidth: 200, maxWidth: .infinity, alignment: .leading)
+                    DetailRow(label: "Email", value: customer.email ?? "N/A")
+                        .frame(minWidth: 350, maxWidth: .infinity, alignment: .leading)
+                    
                 }
 
                 if let address = customer.address, !address.isEmpty {
@@ -233,6 +235,50 @@ struct CustomerDetailView: View {
                 .padding(.horizontal)
 
                 Spacer()
+            }
+            .padding()
+            .presentationDetents([.medium])
+        }
+        
+        // New Order Pop-Up
+        .sheet(isPresented: $showAddOrderPopup) {
+            VStack(spacing: 12) {
+                Text("Add New Order")
+                    .font(.headline)
+                    .padding(.top)
+                
+                // Flavor Inputs
+                FlavorInputRow(flavor: OrderConstants.chocolateChip, quantity: $chocolateChipQuantity)
+                FlavorInputRow(flavor: OrderConstants.sprinkle, quantity: $sprinkleQuantity)
+                FlavorInputRow(flavor: OrderConstants.smore, quantity: $smoreQuantity)
+                FlavorInputRow(flavor: OrderConstants.oreo, quantity: $oreoQuantity)
+                
+                Divider()
+                
+                // Delivery & Promised Date
+                LazyVGrid(columns: lazyColumns, alignment: .leading, spacing: 16) {
+                    DatePicker("Select a Date", selection: $promisedDate, displayedComponents: .date)
+                        .datePickerStyle(.compact)
+                    
+                    Toggle(isOn: $isDelivery) {
+                        Text("Delivery")
+                    }
+                    .toggleStyle(SwitchToggleStyle())
+                }
+                
+                Divider()
+                
+                // Save Button
+                Button("Save Order") {
+                    //saveNewOrder()
+                    showAddOrderPopup = false
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color.blue)
+                .foregroundColor(.white)
+                .cornerRadius(8)
+                .padding(.horizontal)
             }
             .padding()
             .presentationDetents([.medium])
