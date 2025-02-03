@@ -1,9 +1,3 @@
-//
-//  PersistenceController.swift
-//  CookieTracker
-//
-//
-//
 import SwiftUI
 import CoreData
 
@@ -48,6 +42,3 @@ class CoreDataStack: ObservableObject {
     
     private init() { }
 }
-
-
-

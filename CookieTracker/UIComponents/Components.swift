@@ -1,8 +1,3 @@
-//
-//  Components.swift
-//  CookieTracker
-//
-
 import SwiftUICore
 import SwiftUI
 
@@ -67,6 +62,21 @@ struct FlavorInputRow: View {
                 }
             }
             .padding(.horizontal, 4)
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+struct DetailRow: View {
+    let label: String
+    let value: String
+
+    var body: some View {
+        HStack {
+            Text(label)
+                .font(.headline)
+            Text(value)
+                .foregroundColor(.blue)
         }
         .padding(.vertical, 4)
     }

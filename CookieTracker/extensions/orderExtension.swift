@@ -1,9 +1,5 @@
-//
-//  orderExtension.swift
-//  CookieTracker
-//
-
 import CoreData
+
 extension OrderEntity{
     func TotalOrderCost() -> Double {
         let cookiesArray = Array(cookies as? Set<CookieEntity> ?? [])

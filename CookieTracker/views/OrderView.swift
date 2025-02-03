@@ -1,9 +1,3 @@
-//
-//  OrderView.swift
-//  CookieTracker
-//
-//
-//
 import SwiftUI
 import CoreData
 

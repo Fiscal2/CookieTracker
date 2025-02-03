@@ -1,7 +1,3 @@
-//
-//  CustomerDetailView.swift
-//  CookieTracker
-//
 import SwiftUI
 import CoreData
 
@@ -427,18 +423,18 @@ struct CustomerDetailView: View {
     }
     
     private func deleteOrder(at offsets: IndexSet) {
-            let ordersArray = Array(customer.orders as? Set<OrderEntity> ?? [])
-            for index in offsets {
-                let orderToDelete = ordersArray[index]
-                viewContext.delete(orderToDelete)
-            }
-            try? viewContext.save()
+        let ordersArray = Array(customer.orders as? Set<OrderEntity> ?? [])
+        for index in offsets {
+            let orderToDelete = ordersArray[index]
+            viewContext.delete(orderToDelete)
         }
+        try? viewContext.save()
+    }
     
     private func checkWordLimit() {
-            let words = noteText.split(separator: " ").count
-            noteTooLong = words > 10
-        }
+        let words = noteText.split(separator: " ").count
+        noteTooLong = words > 10
+    }
 
     private func saveCustomerChanges() {
         customer.name = editedName
@@ -466,19 +462,3 @@ struct CustomerDetailView: View {
         }
     }
 }
-
-struct DetailRow: View {
-    let label: String
-    let value: String
-
-    var body: some View {
-        HStack {
-            Text(label)
-                .font(.headline)
-            Text(value)
-                .foregroundColor(.blue)
-        }
-        .padding(.vertical, 4)
-    }
-}
-

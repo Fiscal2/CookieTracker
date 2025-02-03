@@ -1,7 +1,3 @@
-//
-//  customerExtension.swift
-//  CookieTracker
-//
 import CoreData
 
 extension CustomerEntity {
@@ -26,4 +22,3 @@ extension CustomerEntity {
         newOrder.addCookies(from: cookieSelections, to: context)
     }
 }
-
