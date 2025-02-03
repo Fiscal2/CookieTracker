@@ -43,6 +43,10 @@ struct CustomerDetailView: View {
         cookieSelections.values.reduce(0, +)
     }
     
+    private var newOrderTotalCost: Double {
+        let deliveryFee = isDelivery ? 6.0 : 0.0
+        return (newOrderTotalQuantity * 2.5) + deliveryFee
+    }
     private var isValidNewOrder: Bool {
         return newOrderTotalQuantity >= 6
     }
@@ -291,7 +295,7 @@ struct CustomerDetailView: View {
                     Text("Total Cost:")
                         .font(.headline)
                     Spacer()
-                    Text("$\(String(format: "%.2f", "0"))")
+                    Text("$\(String(format: "%.2f", newOrderTotalCost))")
                         .font(.headline)
                         .foregroundColor(.blue)
                 }
