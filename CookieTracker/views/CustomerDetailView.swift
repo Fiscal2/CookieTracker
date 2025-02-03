@@ -24,10 +24,12 @@ struct CustomerDetailView: View {
     
     // State for Adding a New Order
     @State private var showAddOrderPopup = false
-    @State private var chocolateChipQuantity = 0.0
-    @State private var sprinkleQuantity = 0.0
-    @State private var smoreQuantity = 0.0
-    @State private var oreoQuantity = 0.0
+    @State private var cookieSelections: [String: Double] = [
+            OrderConstants.chocolateChip: 0,
+            OrderConstants.sprinkle: 0,
+            OrderConstants.smore: 0,
+            OrderConstants.oreo: 0
+        ]
     @State private var promisedDate = Date()
     @State private var isDelivery = false
 
@@ -41,6 +43,13 @@ struct CustomerDetailView: View {
         GridItem(.flexible(), spacing: 16),
         GridItem(.flexible(), spacing: 16)
     ]
+    private var newOrderTotalQuantity: Double {
+        cookieSelections.values.reduce(0, +)
+    }
+    
+    private var isValidNewOrder: Bool {
+        return newOrderTotalQuantity >= 6
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -74,6 +83,7 @@ struct CustomerDetailView: View {
                     DetailRow(label: "Phone", value: customer.phone ?? "N/A")
                     DetailRow(label: "Email", value: customer.email ?? "N/A")
                         .frame(minWidth: 350, maxWidth: .infinity, alignment: .leading)
+                        .lineLimit(1)
                     
                 }
 
@@ -177,10 +187,19 @@ struct CustomerDetailView: View {
             let allOrderCookies = ordersArray.flatMap { order in
                 (order.cookies as? Set<CookieEntity>) ?? []
             }
+            
+            let groupedCookies = Dictionary(grouping: allOrderCookies, by: { $0.flavor ?? "Unknown" })
+                .mapValues { cookies in
+                    cookies.reduce(0) { total, cookie in total + Int(cookie.quantity) }
+                }
+            
+            let consolidatedCookies = groupedCookies.map { (flavor, quantity) in
+                (flavor: flavor, quantity: quantity)
+            }
 
             LazyVGrid(columns: lazyColumns, alignment: .leading, spacing: 16) {
-                ForEach(allOrderCookies) { cookie in
-                    DetailRow(label: "\(cookie.flavor ?? ""):", value: "\(Int(cookie.quantity))")
+                ForEach(consolidatedCookies, id: \.flavor) { cookie in
+                    DetailRow(label: "\(cookie.flavor):", value: "\(cookie.quantity)")
                 }
             }
 
@@ -222,18 +241,19 @@ struct CustomerDetailView: View {
                 TextField("Address", text: $editedAddress)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding()
-
-                Button("Save") {
+                
+                Button(action: {
                     saveCustomerChanges()
                     showEditCustomerPopup = false
+                }) {
+                   Text("Save")
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                        .padding(.horizontal)
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(8)
-                .padding(.horizontal)
-
                 Spacer()
             }
             .padding()
@@ -247,18 +267,22 @@ struct CustomerDetailView: View {
                     .font(.headline)
                     .padding(.top)
                 
+                
                 // Flavor Inputs
-                FlavorInputRow(flavor: OrderConstants.chocolateChip, quantity: $chocolateChipQuantity)
-                FlavorInputRow(flavor: OrderConstants.sprinkle, quantity: $sprinkleQuantity)
-                FlavorInputRow(flavor: OrderConstants.smore, quantity: $smoreQuantity)
-                FlavorInputRow(flavor: OrderConstants.oreo, quantity: $oreoQuantity)
+                ForEach(cookieSelections.keys.sorted(), id: \.self) { flavor in
+                    FlavorInputRow(flavor: flavor, quantity: Binding(
+                        get: { cookieSelections[flavor, default: 0] },
+                        set: { cookieSelections[flavor] = $0 }
+                    ))
+                }
                 
                 Divider()
                 
                 // Delivery & Promised Date
                 LazyVGrid(columns: lazyColumns, alignment: .leading, spacing: 16) {
-                    DatePicker("Select a Date", selection: $promisedDate, displayedComponents: .date)
+                    DatePicker("", selection: $promisedDate, displayedComponents: .date)
                         .datePickerStyle(.compact)
+                        .labelsHidden()
                     
                     Toggle(isOn: $isDelivery) {
                         Text("Delivery")
@@ -268,17 +292,27 @@ struct CustomerDetailView: View {
                 
                 Divider()
                 
-                // Save Button
-                Button("Save Order") {
-                    //saveNewOrder()
-                    showAddOrderPopup = false
+                HStack {
+                    Text("Total Cost:")
+                        .font(.headline)
+                    Spacer()
+                    Text("$\(String(format: "%.2f", "0"))")
+                        .font(.headline)
+                        .foregroundColor(.blue)
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(8)
-                .padding(.horizontal)
+                Button(action: {
+                    saveNewOrder()
+                    showAddOrderPopup = false
+                }) {
+                   Text("Save")
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                        .padding(.horizontal)
+                }
+                
             }
             .padding()
             .presentationDetents([.medium])
@@ -302,18 +336,19 @@ struct CustomerDetailView: View {
                         .font(.footnote)
                         .padding(.bottom, 5)
                 }
-
-                Button("Save") {
+                
+                Button(action: {
                     saveNote()
                     showNotePopup = false
+                }) {
+                   Text("Save")
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                        .padding(.horizontal)
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(8)
-                .padding(.horizontal)
-
                 Spacer()
             }
             .padding()
@@ -355,21 +390,40 @@ struct CustomerDetailView: View {
                 Spacer()
 
                 // Close Button
-                Button("Close") {
+                Button(action: {
                     showOrderPopup = false
+                }) {
+                    Text("Close")
+                        .frame(maxWidth: .infinity, minHeight: 21)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(8)
                 .padding(.horizontal)
-                .contentShape(Rectangle()) // Ensures full button is tappable
-
             }
             .padding()
             .presentationDetents([.medium]) // Half-screen pop-up
         }
+    }
+    
+    // Save New Order Function
+    private func saveNewOrder() {
+        guard isValidNewOrder else { return }
+        let newOrder = OrderEntity(context: viewContext)
+        newOrder.promisedDate = promisedDate
+        newOrder.delivery = isDelivery
+        newOrder.customer = customer
+                
+        for (flavor, quantity) in cookieSelections where quantity > 0 {
+            let newCookie = CookieEntity(context: viewContext)
+            newCookie.flavor = flavor
+            newCookie.quantity = Double(quantity)
+            newCookie.order = newOrder
+            
+        }
+
+        try? viewContext.save()
     }
     
     private func deleteOrder(at offsets: IndexSet) {
