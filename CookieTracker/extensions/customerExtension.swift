@@ -19,6 +19,7 @@ extension CustomerEntity {
         newOrder.promisedDate = promisedDate
         newOrder.delivery = isDelivery
         newOrder.customer = self
+        newOrder.isCompleted = false
         newOrder.addCookies(from: cookieSelections, to: context)
     }
 }
