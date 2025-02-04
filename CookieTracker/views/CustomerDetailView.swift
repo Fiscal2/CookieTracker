@@ -113,6 +113,7 @@ struct CustomerDetailView: View {
                 }
                 .buttonStyle(PlainButtonStyle())
                 
+                // "Add Order" Button
                 Button(action: {
                     showAddOrderPopup = true
                 }) {
@@ -167,7 +168,6 @@ struct CustomerDetailView: View {
             .listStyle(PlainListStyle())
 
             Divider()
-            
             
             // Orders List
             Text("Total Cookies")
@@ -321,7 +321,7 @@ struct CustomerDetailView: View {
             .presentationDetents([.medium])
         }
 
-        // Order Note Pop-Up**
+        // Order Note Pop-Up
         .sheet(isPresented: $showNotePopup) {
             VStack(spacing: 8) {
                 Text("Order Note (Max 10 Words)")
@@ -416,7 +416,6 @@ struct CustomerDetailView: View {
             newCookie.flavor = flavor
             newCookie.quantity = Double(quantity)
             newCookie.order = newOrder
-            
         }
 
         try? viewContext.save()
