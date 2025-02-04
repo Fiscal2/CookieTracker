@@ -58,7 +58,6 @@ struct CustomerListView: View {
     private func deleteConfirmedCustomer() {
         if let customerToDelete {
             viewContext.delete(customerToDelete) // Delete the customer
-
             do {
                 try viewContext.save()
             } catch {
