@@ -173,9 +173,9 @@ struct CustomerDetailView: View {
             Text("Total Cookies")
                 .font(.headline)
             
-            let totalCostOfAllOrders = ordersArray.TotalOrdersCost()
+            let totalCostOfAllOrders = inProgressOrders.TotalOrdersCost()
             
-            let cookiesFromAllOrders = ordersArray.flatMap { order in
+            let cookiesFromAllOrders = inProgressOrders.flatMap { order in
                 (order.cookies as? Set<CookieEntity>) ?? []
             }
             
