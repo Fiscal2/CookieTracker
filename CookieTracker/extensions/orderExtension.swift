@@ -25,6 +25,10 @@ extension OrderEntity{
 
 extension [OrderEntity]{
     func TotalOrdersCost() -> Double {
-        return self.reduce(0) {$0 + $1.TotalOrderCost()}
+        return self.reduce(0) { $0 + $1.TotalOrderCost() }
+    }
+    
+    func historicalOrders() -> [OrderEntity] {
+        return self.filter { $0.isCompleted == true }
     }
 }
