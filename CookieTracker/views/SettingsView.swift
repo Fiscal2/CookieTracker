@@ -1,7 +1,3 @@
-//
-//  SettingsView.swift
-//  CookieTracker
-//
 import SwiftUI
 
 struct SettingsView: View {
@@ -30,7 +26,3 @@ struct SettingsView: View {
         window.overrideUserInterfaceStyle = isDarkMode ? .dark : .light
     }
 }
-
-
-
-

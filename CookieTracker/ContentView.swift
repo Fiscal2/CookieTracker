@@ -1,9 +1,3 @@
-//
-//  ContentView.swift
-//  CookieTracker
-//
-// 
-//
 import SwiftUI
 
 struct ContentView: View {

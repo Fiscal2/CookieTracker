@@ -1,9 +1,3 @@
-//
-//  OrderView.swift
-//  CookieTracker
-//
-//
-//
 import SwiftUI
 import CoreData
 
@@ -84,6 +78,7 @@ struct OrderView: View {
                         VStack(spacing: 6) {
                             Text("Flavors (Min of 6):")
                                 .font(.headline)
+
                             ForEach(cookieSelections.keys.sorted(), id: \.self) { flavor in
                                 FlavorInputRow(flavor: flavor, quantity: Binding(
                                     get: { cookieSelections[flavor, default: 0] },
@@ -108,7 +103,6 @@ struct OrderView: View {
                         // Promised By Label
                         Text("Promised By Date:")
                             .font(.headline)
-
 
                         // Delivery Toggle
                         Toggle(isOn: $isDelivery) {
@@ -203,7 +197,6 @@ struct OrderView: View {
     }
 
     private func saveOrder() {
-
         // Ensure the order meets the 6-cookie minimum
         guard isValidOrder else {
             showValidationError = true
@@ -212,7 +205,10 @@ struct OrderView: View {
 
         // Check if customer already exists
         if let existingCustomer = CustomerEntity.isExistingCustomer(name: name, phone: phone, context: viewContext) {
-            addOrder(to: existingCustomer)
+            existingCustomer.createNewOrder(promisedDate: promisedDate,
+                                            isDelivery: isDelivery,
+                                            cookieSelections: cookieSelections,
+                                            context: viewContext)
         } else {
             createNewCustomer()
         }
@@ -231,25 +227,6 @@ struct OrderView: View {
         }
     }
     
-    private func addOrder(to customer: CustomerEntity) {
-        let newOrder = OrderEntity(context: viewContext)
-        newOrder.customer = customer
-        newOrder.promisedDate = promisedDate
-        newOrder.delivery = isDelivery
-        addCookies (to: newOrder)
-    }
-
-    private func addCookies(to order: OrderEntity) {
-        
-        for (flavor, quantity) in cookieSelections {
-            let newCookie = CookieEntity(context: viewContext)
-            newCookie.flavor = flavor
-            newCookie.quantity = quantity
-            newCookie.totalCost = quantity * 2.5
-            newCookie.order = order
-        }
-    }
-
     private func createNewCustomer() {
         let newCustomer = CustomerEntity(context: viewContext)
         newCustomer.id = UUID()
@@ -258,8 +235,10 @@ struct OrderView: View {
         newCustomer.email = email
         newCustomer.address = address
         newCustomer.totalCost = currentTotalCost
-
-        addOrder(to: newCustomer)
+        newCustomer.createNewOrder(promisedDate: promisedDate,
+                                   isDelivery: isDelivery,
+                                   cookieSelections: cookieSelections,
+                                   context: viewContext)
     }
 
     private func resetFields() {
@@ -273,83 +252,3 @@ struct OrderView: View {
         isDelivery = false
     }
 }
-
-struct FormTextField: View {
-    var placeholder: String
-    @Binding var text: String
-
-    var body: some View {
-        TextField(placeholder, text: $text)
-            .padding(12)
-            .background(Color.white)
-            .cornerRadius(8)
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color.gray.opacity(0.5), lineWidth: 1)
-            )
-    }
-}
-
-struct FlavorInputRow: View {
-    let flavor: String
-    @Binding var quantity: Double
-
-    var body: some View {
-        HStack {
-            Text(flavor)
-                .font(.headline)
-
-            Spacer()
-
-            HStack(spacing: 6) {
-                // Decrement Button
-                Button(action: {
-                    if quantity > 0 {
-                        withAnimation(.easeInOut(duration: 0.1)) {
-                            quantity -= 1
-                        }
-                    }
-                }) {
-                    Image(systemName: "minus.circle.fill")
-                        .resizable()
-                        .frame(width: 24, height: 24)
-                        .foregroundColor(quantity > 0 ? .blue : .gray)
-                }
-                .disabled(quantity == 0)
-
-                Text("\(Int(quantity))")
-                    .frame(width: 32)
-                    .font(.headline)
-                    .multilineTextAlignment(.center)
-
-                // Increment Button
-                Button(action: {
-                    withAnimation(.easeInOut(duration: 0.10)) {
-                        quantity += 1
-                    }
-                }) {
-                    Image(systemName: "plus.circle.fill")
-                        .resizable()
-                        .frame(width: 24, height: 24)
-                        .foregroundColor(.blue)
-                }
-            }
-            .padding(.horizontal, 4)
-        }
-        .padding(.vertical, 4)
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-

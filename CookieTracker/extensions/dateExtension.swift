@@ -1,7 +1,3 @@
-//
-//  dateExtension.swift
-//  CookieTracker
-//
 import SwiftUI
 
 // Date Formatter for displaying the "Promised By" date

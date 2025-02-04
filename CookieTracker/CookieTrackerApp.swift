@@ -1,7 +1,3 @@
-//
-//  CookieTrackerApp.swift
-//  CookieTracker
-//
 import SwiftUI
 
 @main

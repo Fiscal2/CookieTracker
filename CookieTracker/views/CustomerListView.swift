@@ -1,7 +1,3 @@
-//
-//  CustomerListView.swift
-//  CookieTracker
-//
 import SwiftUI
 import CoreData
 
@@ -52,7 +48,6 @@ struct CustomerListView: View {
         }
     }
 
-    // **Ask for Confirmation Before Deleting**
     private func confirmDeleteCustomer(at offsets: IndexSet) {
         if let index = offsets.first {
             customerToDelete = customers[index]
@@ -60,7 +55,6 @@ struct CustomerListView: View {
         }
     }
 
-    // **Delete Customer Only if Confirmed**
     private func deleteConfirmedCustomer() {
         if let customerToDelete {
             viewContext.delete(customerToDelete) // Delete the customer
@@ -75,10 +69,3 @@ struct CustomerListView: View {
         }
     }
 }
-
-
-
-
-
-
-
