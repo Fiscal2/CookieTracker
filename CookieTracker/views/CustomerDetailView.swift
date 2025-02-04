@@ -8,10 +8,6 @@ struct CustomerDetailView: View {
 
     // State for Editing Customer
     @State private var showEditCustomerPopup = false
-    @State private var editedName = ""
-    @State private var editedPhone = ""
-    @State private var editedEmail = ""
-    @State private var editedAddress = ""
 
     // State for Order Notes
     @State private var showNotePopup = false
@@ -61,10 +57,6 @@ struct CustomerDetailView: View {
                 Spacer()
                 // Floating "Edit Customer" Button
                 Button(action: {
-                    editedName = customer.name ?? ""
-                    editedPhone = customer.phone ?? ""
-                    editedEmail = customer.email ?? ""
-                    editedAddress = customer.address ?? ""
                     showEditCustomerPopup = true
                 }) {
                     Image(systemName: "square.and.pencil")
@@ -225,19 +217,31 @@ struct CustomerDetailView: View {
                     .font(.headline)
                     .padding(.top)
 
-                TextField("Name", text: $editedName)
+                TextField("Name", text: Binding(
+                    get: { customer.name ?? "" },
+                    set: { customer.name = $0 }
+                ))
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding()
 
-                TextField("Phone", text: $editedPhone)
+                TextField("Phone", text: Binding(
+                    get: { customer.phone ?? "" },
+                    set: { customer.phone = $0 }
+                ))
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding()
 
-                TextField("Email", text: $editedEmail)
+                TextField("Email", text: Binding(
+                    get: { customer.email ?? "" },
+                    set: { customer.email = $0 }
+                ))
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding()
 
-                TextField("Address", text: $editedAddress)
+                TextField("Address", text: Binding(
+                    get: { customer.address ?? "" },
+                    set: { customer.address = $0 }
+                ))
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding()
                 
@@ -266,7 +270,7 @@ struct CustomerDetailView: View {
                     .font(.headline)
                     .padding(.top)
                 
-                
+            
                 // Flavor Inputs
                 ForEach(cookieSelections.keys.sorted(), id: \.self) { flavor in
                     FlavorInputRow(flavor: flavor, quantity: Binding(
@@ -440,10 +444,6 @@ struct CustomerDetailView: View {
     }
 
     private func saveCustomerChanges() {
-        customer.name = editedName
-        customer.phone = editedPhone
-        customer.email = editedEmail
-        customer.address = editedAddress
         try? viewContext.save()
     }
 
