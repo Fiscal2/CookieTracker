@@ -365,20 +365,12 @@ struct CustomerDetailView: View {
                     .padding(.top)
 
                 // Delivery Status
-                if selectedOrderDelivery {
-                    HStack {
-                        Text("🏠 Home Delivery")
-                            .foregroundColor(.blue)
-                            .bold()
-                    }
-                } else {
-                    HStack {
-                        Text("🚗 Pickup")
-                            .foregroundColor(.blue)
-                            .bold()
-                    }
+                HStack {
+                    Text(selectedOrderDelivery ? "🏠 Home Delivery" : "🚗 Pickup")
+                        .foregroundColor(.blue)
+                        .bold()
                 }
-
+           
                 Divider()
 
                 // List of Flavors & Quantities
@@ -417,7 +409,8 @@ struct CustomerDetailView: View {
         newOrder.promisedDate = promisedDate
         newOrder.delivery = isDelivery
         newOrder.customer = customer
-                
+        newOrder.isCompleted = false
+        
         for (flavor, quantity) in cookieSelections where quantity > 0 {
             let newCookie = CookieEntity(context: viewContext)
             newCookie.flavor = flavor
