@@ -31,4 +31,8 @@ extension [OrderEntity]{
     func historicalOrders() -> [OrderEntity] {
         return self.filter { $0.isCompleted == true }
     }
+    
+    func inProgressOrders() -> [OrderEntity] {
+        return self.filter { $0.isCompleted == false }
+    }
 }

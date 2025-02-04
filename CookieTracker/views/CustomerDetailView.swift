@@ -137,10 +137,10 @@ struct CustomerDetailView: View {
             Text("Orders Summary")
                 .font(.headline)
 
-            let ordersArray = Array(customer.orders as? Set<OrderEntity> ?? [])
-
+            let inProgressOrders = Array(customer.orders as? Set<OrderEntity> ?? []).inProgressOrders()
+            
             List {
-                ForEach(ordersArray, id: \.self) { order in
+                ForEach(inProgressOrders, id: \.self) { order in
                     let orderPromisedDate = order.promisedDate ?? Date()
                     let cookiesArray = Array(order.cookies as? Set<CookieEntity> ?? [])
 
