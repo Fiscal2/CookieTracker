@@ -112,7 +112,7 @@ struct OrderView: View {
                         .toggleStyle(SwitchToggleStyle())
                         
                         // Date Picker
-                        DatePicker("", selection: $promisedDate, in: Date()..., displayedComponents: .date) // Prevents past dates
+                        DatePicker("", selection: $promisedDate, in: Date()..., displayedComponents: [.date, .hourAndMinute])
                             .datePickerStyle(.compact)
                             .labelsHidden()
                     }

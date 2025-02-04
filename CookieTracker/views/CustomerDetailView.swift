@@ -2,7 +2,7 @@ import SwiftUI
 import CoreData
 
 struct CustomerDetailView: View {
-    let customer: CustomerEntity
+    @ObservedObject var customer: CustomerEntity
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.openURL) var openURL
 
@@ -188,10 +188,11 @@ struct CustomerDetailView: View {
             }
             
             let groupedCookies = Dictionary(grouping: cookiesFromAllOrders, by: { $0.flavor ?? "Unknown" })
-                .mapValues { cookies in
-                    cookies.reduce(0) { total, cookie in
+                .compactMapValues { cookies -> Int? in
+                    let totalQuantity = cookies.reduce(0) { total, cookie in
                         total + Int(cookie.quantity)
                     }
+                    return totalQuantity > 0 ? totalQuantity : nil
                 }
 
             LazyVGrid(columns: lazyColumns, alignment: .leading, spacing: 16) {
