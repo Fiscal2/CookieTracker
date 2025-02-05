@@ -188,7 +188,7 @@ struct CustomerDetailView: View {
             
             LazyVGrid(columns: lazyColumns, alignment: .leading, spacing: 16) {
                 ForEach(groupedCookies.keys.sorted(), id: \.self) { flavor in
-                    if let quantity = groupedCookies[flavor], quantity > 0 {
+                    if let quantity = groupedCookies[flavor] {
                         DetailRow(label: "\(flavor):", value: "\(quantity)")
                     }
                 }
@@ -375,9 +375,7 @@ struct CustomerDetailView: View {
 
                 // List of Flavors & Quantities
                 ForEach(selectedCookieOrderDetails) { cookie in
-                    if cookie.quantity > 0 {
-                           DetailRow(label: "\(cookie.flavor ?? ""):", value: "\(Int(cookie.quantity))")
-                       }
+                   DetailRow(label: "\(cookie.flavor ?? ""):", value: "\(Int(cookie.quantity))")
                 }
                 
                 if selectedOrderDelivery {
@@ -412,13 +410,7 @@ struct CustomerDetailView: View {
         newOrder.delivery = isDelivery
         newOrder.customer = customer
         newOrder.isCompleted = false
-        
-        for (flavor, quantity) in cookieSelections where quantity > 0 {
-            let newCookie = CookieEntity(context: viewContext)
-            newCookie.flavor = flavor
-            newCookie.quantity = Double(quantity)
-            newCookie.order = newOrder
-        }
+        newOrder.addCookies(from: cookieSelections, to: viewContext)
 
         try? viewContext.save()
     }
