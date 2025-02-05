@@ -180,16 +180,15 @@ struct CustomerDetailView: View {
             }
             
             let groupedCookies = Dictionary(grouping: cookiesFromAllOrders, by: { $0.flavor ?? "Unknown" })
-                .compactMapValues { cookies -> Int? in
-                    let totalQuantity = cookies.reduce(0) { total, cookie in
+                .mapValues { cookies in
+                    cookies.reduce(0) { total, cookie in
                         total + Int(cookie.quantity)
                     }
-                    return totalQuantity > 0 ? totalQuantity : nil
                 }
-
+            
             LazyVGrid(columns: lazyColumns, alignment: .leading, spacing: 16) {
                 ForEach(groupedCookies.keys.sorted(), id: \.self) { flavor in
-                    if let quantity = groupedCookies[flavor] {
+                    if let quantity = groupedCookies[flavor], quantity > 0 {
                         DetailRow(label: "\(flavor):", value: "\(quantity)")
                     }
                 }
@@ -376,7 +375,9 @@ struct CustomerDetailView: View {
 
                 // List of Flavors & Quantities
                 ForEach(selectedCookieOrderDetails) { cookie in
-                    DetailRow(label: "\(cookie.flavor ?? ""):", value: "\(Int(cookie.quantity))")
+                    if cookie.quantity > 0 {
+                           DetailRow(label: "\(cookie.flavor ?? ""):", value: "\(Int(cookie.quantity))")
+                       }
                 }
                 
                 if selectedOrderDelivery {
