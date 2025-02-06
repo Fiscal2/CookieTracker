@@ -39,7 +39,7 @@ struct FlavorInputRow: View {
                 }) {
                     Image(systemName: "minus.circle.fill")
                         .resizable()
-                        .frame(width: 24, height: 24)
+                        .frame(width: 30, height: 30)
                         .foregroundColor(quantity > 0 ? .blue : .gray)
                 }
                 .disabled(quantity == 0)
@@ -57,7 +57,7 @@ struct FlavorInputRow: View {
                 }) {
                     Image(systemName: "plus.circle.fill")
                         .resizable()
-                        .frame(width: 24, height: 24)
+                        .frame(width: 30, height: 30)
                         .foregroundColor(.blue)
                 }
             }
