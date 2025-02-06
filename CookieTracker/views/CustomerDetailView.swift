@@ -284,7 +284,7 @@ struct CustomerDetailView: View {
                 // Delivery & Promised Date
                 LazyVGrid(columns: lazyColumns, alignment: .leading, spacing: 16) {
                     DatePicker("", selection: $promisedDate, displayedComponents: .date)
-                        .datePickerStyle(.compact)
+                        .datePickerStyle(.wheel)
                         .labelsHidden()
                     
                     Toggle(isOn: $isDelivery) {
@@ -437,7 +437,12 @@ struct CustomerDetailView: View {
         customer.note = noteText
         try? viewContext.save()
     }
-
+    
+    private func markOrderAsComplete(_ order: OrderEntity) {
+        order.isCompleted = true
+        try? viewContext.save()
+    }
+    
     private func formattedDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMM dd, yyyy"
