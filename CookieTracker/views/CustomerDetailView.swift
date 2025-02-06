@@ -180,13 +180,12 @@ struct CustomerDetailView: View {
             }
             
             let groupedCookies = Dictionary(grouping: cookiesFromAllOrders, by: { $0.flavor ?? "Unknown" })
-                .compactMapValues { cookies -> Int? in
-                    let totalQuantity = cookies.reduce(0) { total, cookie in
+                .mapValues { cookies in
+                    cookies.reduce(0) { total, cookie in
                         total + Int(cookie.quantity)
                     }
-                    return totalQuantity > 0 ? totalQuantity : nil
                 }
-
+            
             LazyVGrid(columns: lazyColumns, alignment: .leading, spacing: 16) {
                 ForEach(groupedCookies.keys.sorted(), id: \.self) { flavor in
                     if let quantity = groupedCookies[flavor] {
@@ -285,7 +284,7 @@ struct CustomerDetailView: View {
                 // Delivery & Promised Date
                 LazyVGrid(columns: lazyColumns, alignment: .leading, spacing: 16) {
                     DatePicker("", selection: $promisedDate, displayedComponents: .date)
-                        .datePickerStyle(.compact)
+                        .datePickerStyle(.wheel)
                         .labelsHidden()
                     
                     Toggle(isOn: $isDelivery) {
@@ -376,7 +375,7 @@ struct CustomerDetailView: View {
 
                 // List of Flavors & Quantities
                 ForEach(selectedCookieOrderDetails) { cookie in
-                    DetailRow(label: "\(cookie.flavor ?? ""):", value: "\(Int(cookie.quantity))")
+                   DetailRow(label: "\(cookie.flavor ?? ""):", value: "\(Int(cookie.quantity))")
                 }
                 
                 if selectedOrderDelivery {
@@ -411,13 +410,7 @@ struct CustomerDetailView: View {
         newOrder.delivery = isDelivery
         newOrder.customer = customer
         newOrder.isCompleted = false
-        
-        for (flavor, quantity) in cookieSelections where quantity > 0 {
-            let newCookie = CookieEntity(context: viewContext)
-            newCookie.flavor = flavor
-            newCookie.quantity = Double(quantity)
-            newCookie.order = newOrder
-        }
+        newOrder.addCookies(from: cookieSelections, to: viewContext)
 
         try? viewContext.save()
     }
@@ -444,7 +437,12 @@ struct CustomerDetailView: View {
         customer.note = noteText
         try? viewContext.save()
     }
-
+    
+    private func markOrderAsComplete(_ order: OrderEntity) {
+        order.isCompleted = true
+        try? viewContext.save()
+    }
+    
     private func formattedDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMM dd, yyyy"

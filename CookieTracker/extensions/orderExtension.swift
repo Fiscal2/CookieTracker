@@ -13,7 +13,7 @@ extension OrderEntity{
     }
     
     func addCookies(from cookieSelections: [String: Double], to context: NSManagedObjectContext) {
-        for (flavor, quantity) in cookieSelections {
+        for (flavor, quantity) in cookieSelections where quantity > 0 {
             let newCookie = CookieEntity(context: context)
             newCookie.flavor = flavor
             newCookie.quantity = quantity
