@@ -81,3 +81,10 @@ struct DetailRow: View {
         .padding(.vertical, 4)
     }
 }
+
+class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([.banner, .sound]) // Show banner and sound when app is open
+    }
+}
+

@@ -414,6 +414,7 @@ struct CustomerDetailView: View {
         newOrder.addCookies(from: cookieSelections, to: viewContext)
 
         try? viewContext.save()
+        scheduleNotification(for: newOrder)
     }
     
     private func deleteOrder(at offsets: IndexSet) {
@@ -421,6 +422,7 @@ struct CustomerDetailView: View {
         for index in offsets {
             let orderToDelete = ordersArray[index]
             viewContext.delete(orderToDelete)
+            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["\(orderToDelete.objectID)"])
         }
         try? viewContext.save()
     }
@@ -442,6 +444,28 @@ struct CustomerDetailView: View {
     private func markOrderAsComplete(_ order: OrderEntity) {
         order.isCompleted = true
         try? viewContext.save()
+    }
+    
+    private func scheduleNotification(for order: OrderEntity) {
+        guard let promisedDate = order.promisedDate else { return }
+        
+        let content = UNMutableNotificationContent()
+        content.title = "Order Reminder"
+        content.body = "\(String(describing: customer.name)) order of \(order.TotalCookiesInOrder()) cookies is ready for \(order.delivery ? "delivery" : "pickup") at \(formattedDateTime(promisedDate))."
+        content.sound = .default
+        
+        let triggerDate = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: promisedDate.addingTimeInterval(-3600)) // 1 hour before
+        let trigger = UNCalendarNotificationTrigger(dateMatching: triggerDate, repeats: false)
+        
+        let request = UNNotificationRequest(identifier: "\(order.objectID)", content: content, trigger: trigger)
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("Failed to schedule notification: \(error.localizedDescription)")
+            } else {
+                print("Notification scheduled for \(formattedDateTime(promisedDate)).")
+            }
+        }
     }
     
     private func formattedDateTime(_ date: Date) -> String {
