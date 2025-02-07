@@ -24,6 +24,11 @@ extension CustomerEntity {
         newOrder.addCookies(from: cookieSelections, to: context)
         newOrder.scheduleNotification(customerName: name ?? "")
         
+        do {
+            try context.save()
+        } catch {
+            print("Error after creating new order: \(error.localizedDescription)")
+        }
     }
     
     func deleteOrder(order: OrderEntity, context: NSManagedObjectContext) {

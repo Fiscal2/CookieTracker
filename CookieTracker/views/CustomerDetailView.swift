@@ -158,7 +158,7 @@ struct CustomerDetailView: View {
                         Text("$\(String(format: "%.2f", order.TotalOrderCost()))")
                             .fontWeight(.bold)
                             .foregroundColor(.blue)
-                        Text("For \(promisedDate.formattedDateTime())")
+                        Text("For \(orderPromisedDate.formattedDateTime())")
                             .foregroundColor(.gray)
                     }
                 }
@@ -363,6 +363,7 @@ struct CustomerDetailView: View {
             .padding()
             .presentationDetents([.medium])
         }
+        
         // Order Details Pop-Up (For Clicking "12 Cookies, 6 Cookies, etc.")
         .sheet(isPresented: $showOrderPopup) {
             VStack(spacing: 12) {
@@ -411,7 +412,6 @@ struct CustomerDetailView: View {
     private func saveNewOrder() {
         guard isValidNewOrder else { return }
         customer.createNewOrder(promisedDate: promisedDate, isDelivery: isDelivery, cookieSelections: cookieSelections, context: viewContext)
-        try? viewContext.save()
     }
     
     private func deleteOrder(orderToDelete: OrderEntity) {
