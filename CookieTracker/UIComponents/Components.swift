@@ -20,7 +20,9 @@ struct FormTextField: View {
 struct FlavorInputRow: View {
     let flavor: String
     @Binding var quantity: Double
-
+    
+    @State private var isLongPressing = false
+    
     var body: some View {
         HStack {
             Text(flavor)
@@ -50,16 +52,32 @@ struct FlavorInputRow: View {
                     .multilineTextAlignment(.center)
 
                 // Increment Button
-                Button(action: {
-                    withAnimation(.easeInOut(duration: 0.10)) {
-                        quantity += 1
-                    }
-                }) {
+                Button(action: {}) {
                     Image(systemName: "plus.circle.fill")
                         .resizable()
                         .frame(width: 24, height: 24)
                         .foregroundColor(.blue)
                 }
+                .simultaneousGesture(TapGesture()
+                    .onEnded {
+                        if !isLongPressing {
+                            withAnimation(.easeInOut(duration: 0.1)) {
+                                quantity += 1
+                            }
+                        }
+                    }
+                )
+                .simultaneousGesture(LongPressGesture(minimumDuration: 0.5)
+                    .onChanged { _ in
+                        isLongPressing = true
+                    }
+                    .onEnded { _ in
+                        withAnimation(.easeInOut(duration: 0.1)) {
+                            quantity += 6
+                        }
+                        isLongPressing = false
+                    }
+                )
             }
             .padding(.horizontal, 4)
         }
