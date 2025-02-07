@@ -40,7 +40,7 @@ extension OrderEntity{
             if let error = error {
                 print("Failed to schedule notification: \(error.localizedDescription)")
             } else {
-                print("Notification scheduled for \(promisedDate.formattedDateTime())).")
+                print("Notification scheduled for \(promisedDate.formattedDateTime()).")
             }
         }
     }

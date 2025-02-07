@@ -158,7 +158,7 @@ struct CustomerDetailView: View {
                         Text("$\(String(format: "%.2f", order.TotalOrderCost()))")
                             .fontWeight(.bold)
                             .foregroundColor(.blue)
-                        Text("For \(formattedDateTime(orderPromisedDate))")
+                        Text("For \(promisedDate.formattedDateTime())")
                             .foregroundColor(.gray)
                     }
                 }
@@ -361,7 +361,7 @@ struct CustomerDetailView: View {
         // Order Details Pop-Up (For Clicking "12 Cookies, 6 Cookies, etc.")
         .sheet(isPresented: $showOrderPopup) {
             VStack(spacing: 12) {
-                Text("Order Details for \(formattedDateTime(selectedOrderDate))")
+                Text("Order Details for \(promisedDate.formattedDateTime())")
                     .font(.headline)
                     .padding(.top)
 
@@ -414,7 +414,7 @@ struct CustomerDetailView: View {
         newOrder.addCookies(from: cookieSelections, to: viewContext)
 
         try? viewContext.save()
-        scheduleNotification(for: newOrder)
+
     }
     
     private func deleteOrder(at offsets: IndexSet) {
@@ -444,35 +444,6 @@ struct CustomerDetailView: View {
     private func markOrderAsComplete(_ order: OrderEntity) {
         order.isCompleted = true
         try? viewContext.save()
-    }
-    
-    private func scheduleNotification(for order: OrderEntity) {
-        guard let promisedDate = order.promisedDate else { return }
-        
-        let content = UNMutableNotificationContent()
-        content.title = "Order Reminder"
-        content.body = "\(String(describing: customer.name)) order of \(order.TotalCookiesInOrder()) cookies is ready for \(order.delivery ? "delivery" : "pickup") at \(formattedDateTime(promisedDate))."
-        content.sound = .default
-        
-        let triggerDate = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: promisedDate.addingTimeInterval(-3600)) // 1 hour before
-        let trigger = UNCalendarNotificationTrigger(dateMatching: triggerDate, repeats: false)
-        
-        let request = UNNotificationRequest(identifier: "\(order.objectID)", content: content, trigger: trigger)
-        
-        UNUserNotificationCenter.current().add(request) { error in
-            if let error = error {
-                print("Failed to schedule notification: \(error.localizedDescription)")
-            } else {
-                print("Notification scheduled for \(formattedDateTime(promisedDate)).")
-            }
-        }
-    }
-    
-    private func formattedDateTime(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter.string(from: date)
     }
 
     private func openAddressInMaps(_ address: String) {
