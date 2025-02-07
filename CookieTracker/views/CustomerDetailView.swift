@@ -412,6 +412,7 @@ struct CustomerDetailView: View {
     private func saveNewOrder() {
         guard isValidNewOrder else { return }
         customer.createNewOrder(promisedDate: promisedDate, isDelivery: isDelivery, cookieSelections: cookieSelections, context: viewContext)
+        cookieSelections = cookieSelections.mapValues { _ in 0 }
     }
     
     private func deleteOrder(orderToDelete: OrderEntity) {
