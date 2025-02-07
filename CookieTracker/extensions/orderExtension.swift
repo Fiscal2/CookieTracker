@@ -5,7 +5,7 @@ extension OrderEntity{
     func TotalOrderCost() -> Double {
         let cookiesArray = Array(cookies as? Set<CookieEntity> ?? [])
         let totalCookiesForOrder = cookiesArray.reduce(0) { $0 + $1.quantity}
-        return (totalCookiesForOrder * 2.5) + (delivery ? 6.0 : 0)
+        return (totalCookiesForOrder * OrderConstants.cookiePrice) + (delivery ? OrderConstants.deliveryFee : 0)
     }
     
     func TotalCookiesInOrder() -> Int {
@@ -18,7 +18,7 @@ extension OrderEntity{
             let newCookie = CookieEntity(context: context)
             newCookie.flavor = flavor
             newCookie.quantity = quantity
-            newCookie.totalCost = Double(quantity) * 2.5
+            newCookie.totalCost = Double(quantity) * OrderConstants.cookiePrice
             newCookie.order = self
         }
     }
@@ -46,8 +46,6 @@ extension OrderEntity{
             }
         }
     }
-    
-    
 }
 
 extension [OrderEntity]{

@@ -30,8 +30,8 @@ struct OrderView: View {
     }
 
     private var currentTotalCost: Double {
-        let deliveryFee = isDelivery ? 6.0 : 0.0
-        return (currentTotalQuantity * 2.5) + deliveryFee
+        let deliveryFee = isDelivery ? OrderConstants.deliveryFee : 0.0
+        return (currentTotalQuantity * OrderConstants.cookiePrice) + deliveryFee
     }
 
     private var isValidOrder: Bool {
