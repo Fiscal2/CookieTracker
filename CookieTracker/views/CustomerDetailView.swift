@@ -330,7 +330,7 @@ struct CustomerDetailView: View {
         // Order Note Pop-Up
         .sheet(isPresented: $showNotePopup) {
             VStack(spacing: 8) {
-                Text("Order Note (Max 10 Words)")
+                Text("Order Note")
                     .font(.headline)
                     .padding(.top)
 
@@ -367,7 +367,7 @@ struct CustomerDetailView: View {
         // Order Details Pop-Up (For Clicking "12 Cookies, 6 Cookies, etc.")
         .sheet(isPresented: $showOrderPopup) {
             VStack(spacing: 12) {
-                Text("Order Details for \(promisedDate.formattedDateTime())")
+                Text("Order Details for \(selectedOrderDate.formattedDateTime())")
                     .font(.headline)
                     .padding(.top)
 
