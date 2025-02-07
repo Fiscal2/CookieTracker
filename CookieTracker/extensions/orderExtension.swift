@@ -23,12 +23,12 @@ extension OrderEntity{
         }
     }
     
-    func scheduleNotification(for order: OrderEntity) {
+    func scheduleNotification(for order: OrderEntity, customerName: String) {
         guard let promisedDate = order.promisedDate else { return }
         
         let content = UNMutableNotificationContent()
         content.title = "Order Reminder"
-        content.body = "\(String(describing: customer.name)) order of \(order.TotalCookiesInOrder()) cookies is ready for \(order.delivery ? "delivery" : "pickup") at \(formattedDateTime(promisedDate))."
+        content.body = "\(customerName) order of \(order.TotalCookiesInOrder()) cookies is ready for \(order.delivery ? "delivery" : "pickup") at \(promisedDate.formattedDateTime())."
         content.sound = .default
         
         let triggerDate = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: promisedDate.addingTimeInterval(-3600)) // 1 hour before
@@ -40,7 +40,7 @@ extension OrderEntity{
             if let error = error {
                 print("Failed to schedule notification: \(error.localizedDescription)")
             } else {
-                print("Notification scheduled for \(formattedDateTime(promisedDate)).")
+                print("Notification scheduled for \(promisedDate.formattedDateTime())).")
             }
         }
     }

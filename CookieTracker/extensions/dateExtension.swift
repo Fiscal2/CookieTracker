@@ -7,11 +7,14 @@ extension DateFormatter {
         formatter.dateStyle = .medium
         return formatter
     }()
-    
-    func formattedDateTime(_ date: Date) -> String {
+}
+
+extension Date {
+    func formattedDateTime() -> String {
        let formatter = DateFormatter()
        formatter.dateStyle = .medium
        formatter.timeStyle = .short
-       return formatter.string(from: date)
-   }
+       return formatter.string(from: self)
+    }
 }
+
