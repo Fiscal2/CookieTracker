@@ -25,13 +25,15 @@ extension OrderEntity{
     
     func scheduleNotification(customerName: String) {
         guard let promisedDate = promisedDate else { return }
+        // display notification 1 hour before order is due
+        let adjustedPromisedDate = promisedDate.addingTimeInterval(-3600)
         
         let content = UNMutableNotificationContent()
         content.title = "Order Reminder"
         content.body = "\(customerName)'s order of \(TotalCookiesInOrder()) cookies is scheduled for \(delivery ? "delivery" : "pickup") at \(promisedDate.formattedDateTime())."
         content.sound = .default
         
-        let triggerDate = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: promisedDate.addingTimeInterval(-3600)) // 1 hour before
+        let triggerDate = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: adjustedPromisedDate)
         let trigger = UNCalendarNotificationTrigger(dateMatching: triggerDate, repeats: false)
         
         let request = UNNotificationRequest(identifier: "\(objectID)", content: content, trigger: trigger)
