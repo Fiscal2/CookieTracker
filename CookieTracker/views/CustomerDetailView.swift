@@ -162,7 +162,12 @@ struct CustomerDetailView: View {
                             .foregroundColor(.gray)
                     }
                 }
-                .onDelete(perform: deleteOrder) // Swipe-to-Delete
+                .onDelete { offsets in
+                    if let index = offsets.first {
+                        let orderToDelete = inProgressOrders[index]
+                        deleteOrder(orderToDelete: orderToDelete)
+                    }
+                }
             }
             .frame(minHeight: 50, maxHeight: .infinity)
             .listStyle(PlainListStyle())
@@ -403,28 +408,14 @@ struct CustomerDetailView: View {
         }
     }
     
-    // Save New Order Function
     private func saveNewOrder() {
         guard isValidNewOrder else { return }
-        let newOrder = OrderEntity(context: viewContext)
-        newOrder.promisedDate = promisedDate
-        newOrder.delivery = isDelivery
-        newOrder.customer = customer
-        newOrder.isCompleted = false
-        newOrder.addCookies(from: cookieSelections, to: viewContext)
-
+        customer.createNewOrder(promisedDate: promisedDate, isDelivery: isDelivery, cookieSelections: cookieSelections, context: viewContext)
         try? viewContext.save()
-
     }
     
-    private func deleteOrder(at offsets: IndexSet) {
-        let ordersArray = Array(customer.orders as? Set<OrderEntity> ?? [])
-        for index in offsets {
-            let orderToDelete = ordersArray[index]
-            viewContext.delete(orderToDelete)
-            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["\(orderToDelete.objectID)"])
-        }
-        try? viewContext.save()
+    private func deleteOrder(orderToDelete: OrderEntity) {
+        customer.deleteOrder(order: orderToDelete, context: viewContext)
     }
     
     private func checkWordLimit() {
