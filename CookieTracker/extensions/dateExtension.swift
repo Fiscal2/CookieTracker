@@ -8,3 +8,13 @@ extension DateFormatter {
         return formatter
     }()
 }
+
+extension Date {
+    func formattedDateTime() -> String {
+       let formatter = DateFormatter()
+       formatter.dateStyle = .medium
+       formatter.timeStyle = .short
+       return formatter.string(from: self)
+    }
+}
+

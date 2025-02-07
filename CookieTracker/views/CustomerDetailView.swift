@@ -158,7 +158,7 @@ struct CustomerDetailView: View {
                         Text("$\(String(format: "%.2f", order.TotalOrderCost()))")
                             .fontWeight(.bold)
                             .foregroundColor(.blue)
-                        Text("for \(formattedDate(orderPromisedDate))")
+                        Text("For \(promisedDate.formattedDateTime())")
                             .foregroundColor(.gray)
                     }
                 }
@@ -283,12 +283,13 @@ struct CustomerDetailView: View {
                 
                 // Delivery & Promised Date
                 LazyVGrid(columns: lazyColumns, alignment: .leading, spacing: 16) {
-                    DatePicker("", selection: $promisedDate, displayedComponents: .date)
-                        .datePickerStyle(.wheel)
+                    DatePicker("", selection: $promisedDate, displayedComponents: [.date, .hourAndMinute])
+                        .datePickerStyle(.compact)
                         .labelsHidden()
                     
                     Toggle(isOn: $isDelivery) {
                         Text("Delivery")
+                            .padding(.leading, 40)
                     }
                     .toggleStyle(SwitchToggleStyle())
                 }
@@ -360,7 +361,7 @@ struct CustomerDetailView: View {
         // Order Details Pop-Up (For Clicking "12 Cookies, 6 Cookies, etc.")
         .sheet(isPresented: $showOrderPopup) {
             VStack(spacing: 12) {
-                Text("Order Details for \(formattedDate(selectedOrderDate))")
+                Text("Order Details for \(promisedDate.formattedDateTime())")
                     .font(.headline)
                     .padding(.top)
 
@@ -413,6 +414,7 @@ struct CustomerDetailView: View {
         newOrder.addCookies(from: cookieSelections, to: viewContext)
 
         try? viewContext.save()
+
     }
     
     private func deleteOrder(at offsets: IndexSet) {
@@ -420,6 +422,7 @@ struct CustomerDetailView: View {
         for index in offsets {
             let orderToDelete = ordersArray[index]
             viewContext.delete(orderToDelete)
+            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["\(orderToDelete.objectID)"])
         }
         try? viewContext.save()
     }
@@ -441,12 +444,6 @@ struct CustomerDetailView: View {
     private func markOrderAsComplete(_ order: OrderEntity) {
         order.isCompleted = true
         try? viewContext.save()
-    }
-    
-    private func formattedDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM dd, yyyy"
-        return formatter.string(from: date)
     }
 
     private func openAddressInMaps(_ address: String) {

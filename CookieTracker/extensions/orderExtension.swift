@@ -1,4 +1,5 @@
 import CoreData
+import UserNotifications
 
 extension OrderEntity{
     func TotalOrderCost() -> Double {
@@ -21,6 +22,30 @@ extension OrderEntity{
             newCookie.order = self
         }
     }
+    
+    func scheduleNotification(for order: OrderEntity, customerName: String) {
+        guard let promisedDate = order.promisedDate else { return }
+        
+        let content = UNMutableNotificationContent()
+        content.title = "Order Reminder"
+        content.body = "\(customerName) order of \(order.TotalCookiesInOrder()) cookies is ready for \(order.delivery ? "delivery" : "pickup") at \(promisedDate.formattedDateTime())."
+        content.sound = .default
+        
+        let triggerDate = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: promisedDate.addingTimeInterval(-3600)) // 1 hour before
+        let trigger = UNCalendarNotificationTrigger(dateMatching: triggerDate, repeats: false)
+        
+        let request = UNNotificationRequest(identifier: "\(order.objectID)", content: content, trigger: trigger)
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("Failed to schedule notification: \(error.localizedDescription)")
+            } else {
+                print("Notification scheduled for \(promisedDate.formattedDateTime()).")
+            }
+        }
+    }
+    
+    
 }
 
 extension [OrderEntity]{
