@@ -22,6 +22,7 @@
         <attribute name="isCompleted" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
         <attribute name="orderID" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="promisedDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="salesTax" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <relationship name="cookies" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="CookieEntity" inverseName="order" inverseEntity="CookieEntity"/>
         <relationship name="customer" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="CustomerEntity" inverseName="orders" inverseEntity="CustomerEntity"/>
     </entity>

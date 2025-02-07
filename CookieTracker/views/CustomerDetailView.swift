@@ -12,7 +12,6 @@ struct CustomerDetailView: View {
     // State for Order Notes
     @State private var showNotePopup = false
     @State private var noteText = ""
-    @State private var noteTooLong = false
     
     // State for Adding a New Order
     @State private var showAddOrderPopup = false
@@ -40,8 +39,8 @@ struct CustomerDetailView: View {
     }
     
     private var newOrderTotalCost: Double {
-        let deliveryFee = isDelivery ? 6.0 : 0.0
-        return (newOrderTotalQuantity * 2.5) + deliveryFee
+        let deliveryFee = isDelivery ? OrderConstants.deliveryFee : 0.0
+        return (newOrderTotalQuantity * OrderConstants.cookiePrice) + deliveryFee
     }
     private var isValidNewOrder: Bool {
         return newOrderTotalQuantity >= 6
@@ -177,9 +176,7 @@ struct CustomerDetailView: View {
             // Orders List
             Text("Total Cookies")
                 .font(.headline)
-            
-            let totalCostOfAllOrders = inProgressOrders.TotalOrdersCost()
-            
+                        
             let cookiesFromAllOrders = inProgressOrders.flatMap { order in
                 (order.cookies as? Set<CookieEntity>) ?? []
             }
@@ -206,7 +203,7 @@ struct CustomerDetailView: View {
                 Text("Total Cost:")
                     .font(.headline)
                 Spacer()
-                Text("$\(String(format: "%.2f", totalCostOfAllOrders))")
+                Text("$\(String(format: "%.2f", inProgressOrders.TotalOrdersCost()))")
                     .font(.headline)
                     .foregroundColor(.blue)
             }
@@ -339,13 +336,6 @@ struct CustomerDetailView: View {
                     .border(Color.gray, width: 1)
                     .padding()
                 
-                if noteTooLong {
-                    Text("⚠️ Note cannot exceed 10 words.")
-                        .foregroundColor(.red)
-                        .font(.footnote)
-                        .padding(.bottom, 5)
-                }
-                
                 Button(action: {
                     saveNote()
                     showNotePopup = false
@@ -420,11 +410,6 @@ struct CustomerDetailView: View {
     
     private func deleteOrder(orderToDelete: OrderEntity) {
         customer.deleteOrder(order: orderToDelete, context: viewContext)
-    }
-    
-    private func checkWordLimit() {
-        let words = noteText.split(separator: " ").count
-        noteTooLong = words > 10
     }
 
     private func saveCustomerChanges() {
